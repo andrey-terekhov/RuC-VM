@@ -1,3 +1,13 @@
+# User files
+*.bat
+*.zip
+*.txt
+*.pdf
+*.doc
+*.docx
+*.jpg
+*.jpeg
+
 # Prerequisites
 *.d
 
@@ -80,13 +90,3 @@ DerivedData/
 .DS_Store
 .AppleDouble
 .LSOverride
-
-# User files
-*.bat
-*.zip
-*.txt
-*.pdf
-*.doc
-*.docx
-*.jpg
-*.jpeg
