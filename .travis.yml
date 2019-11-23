@@ -1,0 +1,12 @@
+notifications:
+  email: false
+
+git:
+  depth: 1
+
+language: c
+compiler: gcc
+
+script:
+  - mkdir -p build && cd build && cmake ..
+  - cmake --build .
