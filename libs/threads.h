@@ -1,16 +1,23 @@
-#pragma region CONSTANTS
-#define __COUNT_TH			10
-#define __COUNT_SEM			16
-#define __COUNT_MSGS_FOR_TH 4
-#pragma endregion
+///
+/// threads.h
+///
+/// Created by Andrey Terekhov on 04.09.2017.
+/// Copyright (c) 2017 Andrey Terekhov. All rights reserved.
+///
+
+#ifndef H_THREADS
+#define H_THREADS
 
 #include <fcntl.h>
+
 
 struct msg_info
 {
 	int numTh;
 	int data;
 };
+
+
 void t_init();
 void t_destroy();
 
@@ -30,3 +37,5 @@ void t_sem_post(int numSem);
 
 void t_msg_send(struct msg_info msg);
 struct msg_info t_msg_receive();
+
+#endif

@@ -1,18 +1,26 @@
-//#include "stdafx.h"
-#include "th_static.h"
-#include <pthread.h>
-#include <semaphore.h>
+///
+/// threads.c
+///
+/// Created by Andrey Terekhov on 10.08.2017.
+/// Copyright (c) 2017 Andrey Terekhov. All rights reserved.
+///
+
+#include "threads.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <pthread.h>
+#include <semaphore.h>
+
+
+#define __COUNT_TH				10
+#define __COUNT_SEM				16
+#define __COUNT_MSGS_FOR_TH		4
 
 #define TRUE  1
 #define FALSE 0
 
-#ifndef _REENTRANT
-#define _REENTRANT
-#endif
 
 struct __threadInfo
 {
@@ -25,6 +33,7 @@ struct __threadInfo
 	int countMsg;
 };
 
+
 int __countTh = 1;
 struct __threadInfo __threads[__COUNT_TH];
 
@@ -33,6 +42,7 @@ int __countSem = 0;
 sem_t *__sems[__COUNT_SEM];
 pthread_rwlock_t __lock_t_create;
 pthread_rwlock_t __lock_t_sem_create;
+
 
 // void perror(const char *str);
 
@@ -60,6 +70,7 @@ void t_init()
 		perror("t_init : pthread_mutex_init of __threads[0].lock failed");
 		exit(EXIT_FAILURE);
 	}
+
 	res = pthread_rwlock_init(&__lock_t_sem_create, NULL);
 	if (res != 0)
 	{
@@ -72,6 +83,7 @@ int __t_create(pthread_attr_t *attr, void *(*func)(void *), void *arg, int isDet
 {
 	pthread_t th;
 	int retVal;
+
 	int res = pthread_rwlock_wrlock(&__lock_t_create);
 	if (res != 0)
 	{
@@ -95,6 +107,7 @@ int __t_create(pthread_attr_t *attr, void *(*func)(void *), void *arg, int isDet
 			exit(EXIT_FAILURE);
 		}
 	}
+
 	if (__countTh >= __COUNT_TH)
 	{
 		perror("t_create : Trying to create too much threads");
@@ -127,6 +140,7 @@ int __t_create(pthread_attr_t *attr, void *(*func)(void *), void *arg, int isDet
 		perror("__t_create : pthread_rwlock_unlock of __lock_t_create failed");
 		exit(EXIT_FAILURE);
 	}
+
 	return retVal;
 }
 
@@ -208,6 +222,7 @@ int t_getThNum()
 	pthread_t th;
 	int index;
 	int i;
+
 	int res = pthread_rwlock_rdlock(&__lock_t_create);
 	if (res != 0)
 	{
@@ -238,27 +253,30 @@ int t_getThNum()
 
 		return index;
 	}
+
 	perror("t_getThNum : Thread is not registered");
 	exit(EXIT_FAILURE);
 }
 
 void t_sleep(int miliseconds)
 {
-	// Sleep(seconds * 1000);
+	// sleep(seconds * 1000);
 	usleep(miliseconds * 1000);
 }
 
 int t_sem_create(int level)
 {
-	int res = pthread_rwlock_wrlock(&__lock_t_sem_create);
 	int retVal;
 	sem_t *sem;
 	char csem[10];
+
+	int res = pthread_rwlock_wrlock(&__lock_t_sem_create);
 	if (res != 0)
 	{
 		perror("t_sem_create : pthread_rwlock_wrlock of __lock_t_sem_create failed");
 		exit(EXIT_FAILURE);
 	}
+
 	sprintf(csem, "%d", __countSem);
 	sem_unlink(csem);
 	sem = sem_open(csem, O_CREAT, S_IRUSR | S_IWUSR, level);
@@ -267,6 +285,7 @@ int t_sem_create(int level)
 		perror("t_sem_create : Semaphore initilization failed");
 		exit(EXIT_FAILURE);
 	}
+
 	if (__countSem >= __COUNT_SEM)
 	{
 		perror("t_create : Trying to create too much semaphores");
@@ -281,18 +300,20 @@ int t_sem_create(int level)
 		perror("t_sem_create : pthread_rwlock_unlock of __lock_t_sem_create failed");
 		exit(EXIT_FAILURE);
 	}
+
 	return retVal;
 }
 
 void t_sem_wait(int numSem)
 {
 	int res = pthread_rwlock_rdlock(&__lock_t_sem_create);
-	//    printf("t_sem_wait numSem= %i __countSem=  %i\n", numSem, __countSem);
+	// printf("t_sem_wait numSem= %i __countSem=  %i\n", numSem, __countSem);
 	if (res != 0)
 	{
 		perror("t_sem_wait : pthread_rwlock_rdlock of __lock_t_sem_create failed");
 		exit(EXIT_FAILURE);
 	}
+
 	if (numSem >= 0 && numSem < __countSem)
 	{
 		sem_t *sem = __sems[numSem];
@@ -303,6 +324,7 @@ void t_sem_wait(int numSem)
 			perror("t_sem_wait : pthread_rwlock_unlock of __lock_t_sem_create failed");
 			exit(EXIT_FAILURE);
 		}
+
 		res = sem_wait(sem);
 		if (res != 0)
 		{
@@ -325,6 +347,7 @@ void t_sem_post(int numSem)
 		perror("t_sem_post : pthread_rwlock_rdlock of __lock_t_sem_create failed");
 		exit(EXIT_FAILURE);
 	}
+
 	if (numSem >= 0 && numSem < __countSem)
 	{
 		sem_t *sem = __sems[numSem];
@@ -357,6 +380,7 @@ void t_msg_send(struct msg_info msg)
 		perror("t_msg_send : pthread_rwlock_rdlock of __lock_t_create failed");
 		exit(EXIT_FAILURE);
 	}
+
 	if (msg.numTh >= 0 && msg.numTh < __countTh)
 	{
 		struct __threadInfo *th_info = &(__threads[msg.numTh]);
@@ -367,12 +391,14 @@ void t_msg_send(struct msg_info msg)
 			perror("t_msg_send : pthread_rwlock_unlock of __lock_t_create failed");
 			exit(EXIT_FAILURE);
 		}
+
 		res = pthread_mutex_lock(&(th_info->lock));
 		if (res != 0)
 		{
 			perror("t_msg_send : pthread_mutex_lock of th_info.lock failed");
 			exit(EXIT_FAILURE);
 		}
+
 		if (th_info->countMsg >= __COUNT_MSGS_FOR_TH)
 		{
 			perror("t_msg_send : Trying to send too much messages");
@@ -390,6 +416,7 @@ void t_msg_send(struct msg_info msg)
 				exit(EXIT_FAILURE);
 			}
 		}
+
 		res = pthread_mutex_unlock(&(th_info->lock));
 		if (res != 0)
 		{
@@ -403,11 +430,13 @@ void t_msg_send(struct msg_info msg)
 		exit(EXIT_FAILURE);
 	}
 }
+
 struct msg_info t_msg_receive()
 {
-	int res = pthread_rwlock_rdlock(&__lock_t_create);
 	int numTh;
 	struct msg_info msg;
+
+	int res = pthread_rwlock_rdlock(&__lock_t_create);
 	if (res != 0)
 	{
 		perror("t_msg_recieve : pthread_rwlock_rdlock of __lock_t_create failed");
@@ -422,12 +451,14 @@ struct msg_info t_msg_receive()
 		perror("t_msg_recieve : pthread_rwlock_unlock of __lock_t_create failed");
 		exit(EXIT_FAILURE);
 	}
+
 	res = pthread_mutex_lock(&(th_info->lock));
 	if (res != 0)
 	{
 		perror("t_msg_recieve : pthread_mutex_lock of th_info.lock failed");
 		exit(EXIT_FAILURE);
 	}
+
 	if (th_info->countMsg == 0)
 	{
 		res = pthread_cond_wait(&(th_info->cond), &(th_info->lock));
@@ -437,6 +468,7 @@ struct msg_info t_msg_receive()
 			exit(EXIT_FAILURE);
 		}
 	}
+
 	msg = th_info->msgs[--th_info->countMsg];
 	res = pthread_mutex_unlock(&(th_info->lock));
 	if (res != 0)
@@ -444,6 +476,7 @@ struct msg_info t_msg_receive()
 		perror("t_msg_recieve : pthread_mutex_unlock of th_info.lock failed");
 		exit(EXIT_FAILURE);
 	}
+
 	return msg;
 }
 
@@ -460,6 +493,7 @@ void t_destroy()
 			perror("t_destroy : pthread_cond_destroy of __threads[i].cond failed");
 			exit(EXIT_FAILURE);
 		}
+
 		res = pthread_mutex_destroy(&(__threads[i].lock));
 		if (res != 0)
 		{
@@ -467,9 +501,10 @@ void t_destroy()
 			exit(EXIT_FAILURE);
 		}
 	}
+
 	for (i = 0; i < __countSem; i++)
 	{
-		//        res = sem_destroy(&(__sems[i]));
+		// res = sem_destroy(&(__sems[i]));
 		res = sem_close(__sems[i]);
 		if (res != 0)
 		{
@@ -477,6 +512,7 @@ void t_destroy()
 			exit(EXIT_FAILURE);
 		}
 	}
+	
 	res = pthread_rwlock_destroy(&__lock_t_create);
 	if (res != 0)
 	{

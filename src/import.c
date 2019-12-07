@@ -8,7 +8,7 @@
 //#define ROBOT
 #include <unistd.h>
 #define _CRT_SECURE_NO_WARNINGS
-#include "th_static.h"
+#include "threads.h"
 #include "utils.h"
 #include <math.h>
 #include <semaphore.h>
