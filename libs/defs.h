@@ -711,7 +711,7 @@
 #define sub										94		// sub rd, rs, rt		rd = rs - rt
 #define subu									95		// subu rd, rs, rt		rd = rs - rt				unsigned
 #define and										96		// and rd, rs, rt		rd = ts & rt
-#define or										97		// or	rd, rs, rt		rd = ts | rt
+#define or										97		// or rd, rs, rt		rd = ts | rt
 #define xor										98		// xor rd, rs, rt		rd = ts ^ rt
 #define nor										99		// nor rd, rs, rt		rd = ~(rs | rt)
 #define slt										102		// slt rd, rs, rt		rd = rs < rt ? 1 : 0
