@@ -9,7 +9,7 @@
 #include <unistd.h>
 #define _CRT_SECURE_NO_WARNINGS
 #include "th_static.h"
-#include "util.h"
+#include "utils.h"
 #include <math.h>
 #include <semaphore.h>
 #include <stdio.h>
@@ -32,7 +32,7 @@
 // Есть глобальный массив threads, i-ый элемент которого указывает на начало куска i-ой нити.
 // Каждый кусок начинается с шапки, где хранятся l, x и pc, которые нужно установить в момент старта нити.
 
-#include "Defs.h"
+#include "defs.h"
 
 #define I2CBUFFERSIZE 50
 

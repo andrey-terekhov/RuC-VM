@@ -75,6 +75,10 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 
+## VSCode
+.vscode/*
+*.code-workspace
+
 ## Xcode
 xcuserdata/
 build/

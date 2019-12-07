@@ -1,11 +1,11 @@
 ///
-/// util.h
+/// utils.c
 ///
 /// Created by Mikhail Terekhov on 03.09.2018.
 /// Copyright (c) 2018 Andrey Terekhov. All rights reserved.
 ///
 
-#include "util.h"
+#include "utils.h"
 
 
 void printf_char(int wchar)
