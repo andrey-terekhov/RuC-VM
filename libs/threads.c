@@ -18,8 +18,8 @@
 #define __COUNT_SEM				16
 #define __COUNT_MSGS_FOR_TH		4
 
-#define TRUE  1
-#define FALSE 0
+#define TRUE	1
+#define FALSE	0
 
 
 struct __threadInfo

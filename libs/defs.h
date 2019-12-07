@@ -1,7 +1,7 @@
 ///
 /// defs.h
 ///
-/// Created by Andrey Terekhov on 03.06.2014.
+/// Created by Andrey Terekhov on 06.03.2014.
 /// Copyright (c) 2014 Andrey Terekhov. All rights reserved.
 ///
 
