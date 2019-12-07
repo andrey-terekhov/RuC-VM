@@ -2222,7 +2222,7 @@ void *interpreter(void *pcPnt)
 	}
 }
 
-void import()
+void import(const char *export)
 {
 	int i;
 	int pc;
@@ -2237,11 +2237,11 @@ void import()
 	system("i2cset -y 2 0x48 0x13 0x1000 w");
 #endif
 
-	input = fopen("export.txt", "r");
+	input = fopen(export, "r");
 
 	if (!input)
 	{
-		printf("export.txt not found\n");
+		printf("%s not found\n", export);
 		return;
 	}
 
@@ -2315,9 +2315,3 @@ int rungetcommand(const char *command)
 	return x;	// ??????
 }
 #endif
-
-int main()
-{
-	import();
-	return 0;
-}
