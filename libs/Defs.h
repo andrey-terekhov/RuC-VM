@@ -1,15 +1,15 @@
 ///
-/// Defs.h
+/// defs.h
 ///
-/// Created by Andrey Terekhov on 03.06.14
-/// Copyright (c) 2014 Andrey Terekhov
-/// All rights reserved
+/// Created by Andrey Terekhov on 03.06.2014.
+/// Copyright (c) 2014 Andrey Terekhov. All rights reserved.
 ///
 
 #ifndef H_DEFS
 #define H_DEFS
 
 #include <pthread.h>
+
 
 #define MAXREPRTAB								10000
 #define MAXIDENTAB								10000
