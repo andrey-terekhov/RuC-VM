@@ -8,9 +8,6 @@
 #ifndef H_DEFS
 #define H_DEFS
 
-#include <pthread.h>
-
-
 #define MAXREPRTAB								10000
 #define MAXIDENTAB								10000
 #define MAXMEMSIZE								1000000
