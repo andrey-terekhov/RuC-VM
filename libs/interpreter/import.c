@@ -17,8 +17,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 // #define ROBOT
 
-#include "threads.h"
-#include "utils.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,6 +24,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <semaphore.h>
+#include "threads.h"
+#include "utils.h"
 
 /*
  *	Я исхожу из того, что нумерация нитей процедурой t_create начинается с 1 и идет последовательно
