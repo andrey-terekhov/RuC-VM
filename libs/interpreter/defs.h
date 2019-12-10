@@ -681,7 +681,7 @@
 #define not_array_in_stanfunc					385
 
 
-//	коды предупреждений
+// коды предупреждений
 
 #define too_long_int							400
 
