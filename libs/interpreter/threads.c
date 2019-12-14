@@ -18,7 +18,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
 
@@ -275,8 +274,11 @@ int t_getThNum()
 void t_sleep(int miliseconds)
 {
 	printf("t_sleep(int)\n");
-	// sleep(seconds * 1000);
+#ifdef _MSC_VER
+	Sleep(miliseconds);
+#else
 	usleep(miliseconds * 1000);
+#endif
 }
 
 int t_sem_create(int level)

@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <semaphore.h>
 #include "threads.h"
 #include "utils.h"
@@ -47,29 +46,29 @@
 #include "defs.h"
 
 
-#define index_out_of_range		1
-#define wrong_kop				2
-#define wrong_arr_init			3
-#define wrong_number_of_elems	4
-#define zero_devide				5
-#define float_zero_devide		6
-#define mem_overflow			7
-#define sqrt_from_negat			8
-#define log_from_negat			9
-#define log10_from_negat		10
-#define wrong_asin				11
-#define wrong_string_init		12
-#define printf_runtime_crash	13
-#define init_err				14
+#define index_out_of_range			1
+#define wrong_kop					2
+#define wrong_arr_init				3
+#define wrong_number_of_elems		4
+#define zero_devide					5
+#define float_zero_devide			6
+#define mem_overflow				7
+#define sqrt_from_negat				8
+#define log_from_negat				9
+#define log10_from_negat			10
+#define wrong_asin					11
+#define wrong_string_init			12
+#define printf_runtime_crash		13
+#define init_err					14
 
 #ifdef ROBOT
-#define wrong_motor_num			15
-#define wrong_motor_pow			16
-#define wrong_digsensor_num		17
-#define wrong_ansensor_num		18
-#define wrong_robot_com			19
+	#define wrong_motor_num			15
+	#define wrong_motor_pow			16
+	#define wrong_digsensor_num		17
+	#define wrong_ansensor_num		18
+	#define wrong_robot_com			19
 
-#define I2CBUFFERSIZE			50
+	#define I2CBUFFERSIZE			50
 #endif
 
 
@@ -2258,7 +2257,11 @@ void *interpreter(void *pcPnt)
 	}
 }
 
+#ifdef _MSC_VER
+__declspec(dllexport) void import(const char *export)
+#else
 void import(const char *export)
+#endif
 {
 	int i;
 	int pc;
