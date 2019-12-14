@@ -18,6 +18,10 @@
 #define H_IMPORT
 
 
+#ifdef _MSC_VER
+__declspec(dllexport) void import(const char *export);
+#else
 void import(const char *export);
+#endif
 
 #endif
