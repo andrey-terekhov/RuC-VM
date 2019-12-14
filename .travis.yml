@@ -9,4 +9,4 @@ compiler: gcc
 
 script:
   - mkdir -p build && cd build && cmake ..
-  - cmake --build .
+  - cmake --build . --config Release
