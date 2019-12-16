@@ -2228,6 +2228,8 @@ void *interpreter(void *pcPnt)
 				runtimeerr(wrong_kop, mem[pc - 1], numTh);
 		}
 	}
+
+	return NULL;
 }
 
 #ifdef _MSC_VER
