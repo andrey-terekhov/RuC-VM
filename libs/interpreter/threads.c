@@ -373,6 +373,7 @@ void t_sem_post(int numSem)
 	if (numSem >= 0 && numSem < __countSem)
 	{
 		sem_t *sem = __sems[numSem];
+
 		res = pthread_rwlock_unlock(&__lock_t_sem_create);
 		if (res != 0)
 		{
