@@ -14,6 +14,8 @@
  *	limitations under the License.
  */
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "threads.h"
 #include <stdio.h>
 #include <stdlib.h>
