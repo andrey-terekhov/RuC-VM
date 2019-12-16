@@ -22,6 +22,8 @@
 #ifndef _MSC_VER
 	#include <unistd.h>
 #else
+	#include <windows.h>
+
 	#define S_IRUSR _S_IREAD
 	#define S_IWUSR _S_IWRITE
 

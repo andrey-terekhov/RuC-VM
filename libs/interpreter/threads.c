@@ -14,6 +14,8 @@
  *	limitations under the License.
  */
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "threads.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -362,6 +364,7 @@ void t_sem_post(int numSem)
 	if (numSem >= 0 && numSem < __countSem)
 	{
 		sem_t *sem = __sems[numSem];
+
 		res = pthread_rwlock_unlock(&__lock_t_sem_create);
 		if (res != 0)
 		{
