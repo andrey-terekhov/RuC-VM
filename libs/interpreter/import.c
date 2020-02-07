@@ -1095,44 +1095,49 @@ void *interpreter(void *pcPnt)
 					}
 					else
 					{
-						do
+						while (curdim != 0)
 						{
-							do
+							while (stacki[curdim] < bounds[curdim])
 							{
-								// go down
-								mem[++x] = bounds[curdim + 1];
-								mem[stackC0[curdim] + stacki[curdim]++] = stackC0[curdim + 1] = x + 1;
-								x += bounds[curdim + 1] * (curdim == N - 1 ? d : 1);
-
-								if (x >= threads[numTh] + MAXMEMTHREAD)
+								// next elem
+								do
 								{
-									runtimeerr(mem_overflow, 0, 0);
-								}
-								++curdim;
-								stacki[curdim] = 0;
-							} while (curdim < N);
-							// построена очередная вертикаль подмассивов
+									// go down
+									mem[++x] = bounds[curdim + 1];
+									mem[stackC0[curdim] + stacki[curdim]++] = stackC0[curdim + 1] = x + 1;
+									x += bounds[curdim + 1] * (curdim == N - 1 ? d : 1);
 
-							if (proc)
-							{
-								int curx = x, oldbase = base, oldpc = pc, i;
-								for (i = stackC0[curdim]; i <= curx; i += d)
+									if (x >= threads[numTh] + MAXMEMTHREAD)
+									{
+										runtimeerr(mem_overflow, 0, 0);
+									}
+									++curdim;
+									stacki[curdim] = 0;
+								} while (curdim < N);
+								// построена очередная вертикаль подмассивов
+
+								if (proc)
 								{
-									pc = proc;	// вычисление границ очередного массива в структуре
-									base = i;
-									mem[threads[numTh] + 1] = x;
+									int curx = x, oldbase = base, oldpc = pc, i;
+									for (i = stackC0[curdim]; i <= curx; i += d)
+									{
+										pc = proc;	// вычисление границ очередного массива в структуре
+										base = i;
+										mem[threads[numTh] + 1] = x;
 
-									interpreter((void *)&pc);
+										interpreter((void *)&pc);
 
-									flagstop = 1;
-									x = xx;
+										flagstop = 1;
+										x = xx;
+									}
+									pc = oldpc;
+									base = oldbase;
 								}
-								pc = oldpc;
-								base = oldbase;
+								// go right
+								--curdim;
 							}
-							// go right
 							--curdim;
-						} while (stacki[curdim] < bounds[curdim] ? 1 : /*up*/ curdim-- != N - 1);
+						}
 					}
 				}
 				adinit = x + 1;	// при usual == 1 использоваться не будет
