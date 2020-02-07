@@ -537,7 +537,7 @@ void t_destroy()
 			exit(EXIT_FAILURE);
 		}
 	}
-	
+
 	res = pthread_rwlock_destroy(&__lock_t_create);
 	if (res != 0)
 	{
