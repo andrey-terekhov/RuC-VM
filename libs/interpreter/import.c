@@ -98,8 +98,12 @@ void rungetcommand(const char *);
 int szof(int type)
 {
 	return modetab[type] == MARRAY
-			   ? 1
-			   : type == LFLOAT ? 2 : (type > 0 && modetab[type] == MSTRUCT) ? modetab[type + 1] : 1;
+				? 1
+				: type == LFLOAT
+					? 2
+					: (type > 0 && modetab[type] == MSTRUCT)
+						? modetab[type + 1]
+						: 1;
 }
 
 void runtimeerr(int e, int i, int r)
