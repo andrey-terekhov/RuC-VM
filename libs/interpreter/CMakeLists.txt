@@ -10,14 +10,14 @@ if(MSVC)
 		set_property(TARGET pthread PROPERTY
 			IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/../pthread/x64/pthreadVC2.lib")
 
-		file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../pthread/x64/pthreadVC2.dll" DESTINATION  "${CMAKE_BINARY_DIR}/Debug")
-		file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../pthread/x64/pthreadVC2.dll" DESTINATION  "${CMAKE_BINARY_DIR}/Release")
+		file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../pthread/x64/pthreadVC2.dll" DESTINATION "${CMAKE_BINARY_DIR}/Debug")
+		file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../pthread/x64/pthreadVC2.dll" DESTINATION "${CMAKE_BINARY_DIR}/Release")
 	else()
 		set_property(TARGET pthread PROPERTY
 			IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/../pthread/x86/pthreadVC2.lib")
 
-		file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../pthread/x86/pthreadVC2.dll" DESTINATION  "${CMAKE_BINARY_DIR}/Debug")
-		file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../pthread/x86/pthreadVC2.dll" DESTINATION  "${CMAKE_BINARY_DIR}/Release")
+		file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../pthread/x86/pthreadVC2.dll" DESTINATION "${CMAKE_BINARY_DIR}/Debug")
+		file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../pthread/x86/pthreadVC2.dll" DESTINATION "${CMAKE_BINARY_DIR}/Release")
 	endif()
 
 	include_directories("../pthread")

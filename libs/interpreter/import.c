@@ -249,7 +249,7 @@ void auxprint(int beg, int t, char before, char after)
 	double rf;
 	int r;
 	r = mem[beg];
-	
+
 	if (before)
 	{
 		printf("%c", before);
@@ -601,7 +601,7 @@ void *interpreter(void *pcPnt)
 				{
 					runtimeerr(wrong_digsensor_num, n, 0);
 				}
-				
+
 				if (n == 1)
 				{
 					fscanf(f1, "%i", &i);
@@ -888,7 +888,7 @@ void *interpreter(void *pcPnt)
 				{
 					mem[x] = 1;
 					break;
-				}				
+				}
 				else if (mem[a_str1 - 1] > mem[str2 - 1])
 				{
 					mem[x] = -1;
@@ -1186,7 +1186,7 @@ void *interpreter(void *pcPnt)
 					{
 						runtimeerr(init_err, mem[adinit], stN[1]);
 					}
-					
+
 					adinit++;
 					do
 					{
@@ -1231,7 +1231,7 @@ void *interpreter(void *pcPnt)
 						}
 					} while (stpnt != 1 || sti[1] != stN[1]);
 				}
-				x = adinit - 1;			
+				x = adinit - 1;
 			}
 				break;
 
@@ -1362,7 +1362,7 @@ void *interpreter(void *pcPnt)
 				di = dsp(mem[pc++], l);
 				len = mem[pc++];
 				di1 = mem[x--];
-				
+
 				for (i = 0; i < len; i++)
 				{
 					mem[di + i] = mem[di1 + i];
@@ -1374,7 +1374,7 @@ void *interpreter(void *pcPnt)
 				di = mem[x--];
 				di1 = dsp(mem[pc++], l);
 				len = mem[pc++];
-				
+
 				for (i = 0; i < len; i++)
 				{
 					mem[di + i] = mem[di1 + i];
@@ -1458,7 +1458,7 @@ void *interpreter(void *pcPnt)
 				d = mem[pc++];
 				i = mem[x--];	// index
 				r = mem[x];		// array
-				
+
 				if (i < 0 || i >= mem[r - 1])
 				{
 					runtimeerr(index_out_of_range, i, mem[r - 1]);
