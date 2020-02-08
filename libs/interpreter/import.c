@@ -554,8 +554,6 @@ void *interpreter(void *pcPnt)
 			case BLYNK_TERMINALC:
 				break;
 
-			case SETSIGNALC:
-				break;
 			case PIXELC:
 				break;
 			case LINEC:
@@ -571,6 +569,23 @@ void *interpreter(void *pcPnt)
 			case DRAW_NUMBERC:
 				break;
 			case ICONC:
+				break;
+
+			case SETSIGNALC:
+			{
+				int array_prt_2 = mem[x--];
+				int array_prt = mem[x--];
+				int sensortype = mem[x--];
+
+				if (sensortype == 0)
+				{
+					printf("setsignal(RELAY, { %d, %d }, %d, %d, %d, %d)\n", (&mem[array_prt])[0], (&mem[array_prt])[1], (&mem[array_prt_2])[0], (&mem[array_prt_2])[1], (&mem[array_prt_2])[2], (&mem[array_prt_2])[3]);
+				}
+				else
+				{
+					printf("setsignal(LED, { %d, %d }, %d, %d, %d, %d, %d, %d, %d)\n", (&mem[array_prt])[0], (&mem[array_prt])[1], (&mem[array_prt_2])[0], (&mem[array_prt_2])[1], (&mem[array_prt_2])[2], (&mem[array_prt_2])[3], (&mem[array_prt_2])[4], (&mem[array_prt_2])[5], (&mem[array_prt_2])[6]);
+				}
+			}
 				break;
 
 			case SETMOTORC:
@@ -1080,44 +1095,49 @@ void *interpreter(void *pcPnt)
 					}
 					else
 					{
-						do
+						while (curdim != 0)
 						{
-							do
+							while (stacki[curdim] < bounds[curdim])
 							{
-								// go down
-								mem[++x] = bounds[curdim + 1];
-								mem[stackC0[curdim] + stacki[curdim]++] = stackC0[curdim + 1] = x + 1;
-								x += bounds[curdim + 1] * (curdim == N - 1 ? d : 1);
-
-								if (x >= threads[numTh] + MAXMEMTHREAD)
+								// next elem
+								do
 								{
-									runtimeerr(mem_overflow, 0, 0);
-								}
-								++curdim;
-								stacki[curdim] = 0;
-							} while (curdim < N);
-							// построена очередная вертикаль подмассивов
+									// go down
+									mem[++x] = bounds[curdim + 1];
+									mem[stackC0[curdim] + stacki[curdim]++] = stackC0[curdim + 1] = x + 1;
+									x += bounds[curdim + 1] * (curdim == N - 1 ? d : 1);
 
-							if (proc)
-							{
-								int curx = x, oldbase = base, oldpc = pc, i;
-								for (i = stackC0[curdim]; i <= curx; i += d)
+									if (x >= threads[numTh] + MAXMEMTHREAD)
+									{
+										runtimeerr(mem_overflow, 0, 0);
+									}
+									++curdim;
+									stacki[curdim] = 0;
+								} while (curdim < N);
+								// построена очередная вертикаль подмассивов
+
+								if (proc)
 								{
-									pc = proc;	// вычисление границ очередного массива в структуре
-									base = i;
-									mem[threads[numTh] + 1] = x;
+									int curx = x, oldbase = base, oldpc = pc, i;
+									for (i = stackC0[curdim]; i <= curx; i += d)
+									{
+										pc = proc;	// вычисление границ очередного массива в структуре
+										base = i;
+										mem[threads[numTh] + 1] = x;
 
-									interpreter((void *)&pc);
+										interpreter((void *)&pc);
 
-									flagstop = 1;
-									x = xx;
+										flagstop = 1;
+										x = xx;
+									}
+									pc = oldpc;
+									base = oldbase;
 								}
-								pc = oldpc;
-								base = oldbase;
+								// go right
+								--curdim;
 							}
-							// go right
 							--curdim;
-						} while (stacki[curdim] < bounds[curdim] ? 1 : /*up*/ curdim-- != N - 1);
+						}
 					}
 				}
 				adinit = x + 1;	// при usual == 1 использоваться не будет
@@ -1341,6 +1361,18 @@ void *interpreter(void *pcPnt)
 				break;
 			case BNE0:
 				pc = (mem[x--]) ? mem[pc] : pc + 1;
+				break;
+			case UPBC:
+			{
+				from = mem[x--];
+				N = mem[x];
+
+				for (i=0; i < N; i++)
+				{
+					from = mem[from];
+				}
+				mem[x] = mem[from-1];
+			}
 				break;
 			case SELECT:
 				mem[x] += mem[pc++];	// ident displ
@@ -1656,67 +1688,67 @@ void *interpreter(void *pcPnt)
 			case ASSATV:
 			{
 				mem[mem[x - 1]] = mem[x];
-				x--;
+				x -= 2;
 			}
 				break;
 			case REMASSATV:
 			{
 				mem[mem[x - 1]] %= check_zero_int(mem[x]);
-				x--;
+				x -= 2;
 			}
 				break;
 			case SHLASSATV:
 			{
 				mem[mem[x - 1]] <<= mem[x];
-				x--;
+				x -= 2;
 			}
 				break;
 			case SHRASSATV:
 			{
 				mem[mem[x - 1]] >>= mem[x];
-				x--;
+				x -= 2;
 			}
 				break;
 			case ANDASSATV:
 			{
 				mem[mem[x - 1]] &= mem[x];
-				x--;
+				x -= 2;
 			}
 				break;
 			case EXORASSATV:
 			{
 				mem[mem[x - 1]] ^= mem[x];
-				x--;
+				x -= 2;
 			}
 				break;
 			case ORASSATV:
 			{
 				mem[mem[x - 1]] |= mem[x];
-				x--;
+				x -= 2;
 			}
 				break;
 			case PLUSASSATV:
 			{
 				mem[mem[x - 1]] += mem[x];
-				x--;
+				x -= 2;
 			}
 				break;
 			case MINUSASSATV:
 			{
 				mem[mem[x - 1]] -= mem[x];
-				x--;
+				x -= 2;
 			}
 				break;
 			case MULTASSATV:
 			{
 				mem[mem[x - 1]] *= mem[x];
-				x--;
+				x -= 2;
 			}
 				break;
 			case DIVASSATV:
 			{
 				mem[mem[x - 1]] /= check_zero_int(mem[x]);
-				x--;
+				x -= 2;
 			}
 				break;
 
