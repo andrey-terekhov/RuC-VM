@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/andrey-terekhov/RuC-VM.svg?branch=master)](https://travis-ci.org/andrey-terekhov/RuC-VM)
-# <img src="https://drive.google.com/uc?export=view&id=1sv2C2hSF_gPG1aPBRbuoAVPdrvBn9tOC" height="32" /> Russian C VM
+# ![Logo](https://raw.githubusercontent.com/Victor-Y-Fadeev/RuC-WPF/master/RuC.WPF/Images/Repository.png) Russian C VM
 
 Этот репозиторий содержит виртуальную машину языка [RuC](https://github.com/andrey-terekhov/RuC).
 Авторство принадлежит [Андрею Николаевичу Терехову](https://github.com/andrey-terekhov),
