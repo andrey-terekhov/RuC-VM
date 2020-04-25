@@ -398,7 +398,7 @@ double check_zero_float(double r)
 
 int dsp(int di, int l)
 {
-	return di < 0 ? g - di : l + di;
+	return di < 0 ? g - di + 5 : l + di;
 }
 
 void *interpreter(void *pcPnt)
@@ -1075,23 +1075,6 @@ void *interpreter(void *pcPnt)
 
 					if (N == 1)
 					{
-						if (proc)
-						{
-							int curx = x, oldbase = base, oldpc = pc, i;
-							for (i = stackC0[1]; i <= curx; i += d)
-							{
-								pc = -proc;	// вычисление границ очередного массива в структуре
-								base = i;
-								mem[threads[numTh] + 1] = x;
-
-								interpreter((void *)&pc);
-
-								flagstop = 1;
-								x = xx;
-							}
-							pc = oldpc;
-							base = oldbase;
-						}
 					}
 					else
 					{
@@ -1116,23 +1099,6 @@ void *interpreter(void *pcPnt)
 								} while (curdim < N);
 								// построена очередная вертикаль подмассивов
 
-								if (proc)
-								{
-									int curx = x, oldbase = base, oldpc = pc, i;
-									for (i = stackC0[curdim]; i <= curx; i += d)
-									{
-										pc = proc;	// вычисление границ очередного массива в структуре
-										base = i;
-										mem[threads[numTh] + 1] = x;
-
-										interpreter((void *)&pc);
-
-										flagstop = 1;
-										x = xx;
-									}
-									pc = oldpc;
-									base = oldbase;
-								}
 								// go right
 								--curdim;
 							}
@@ -1518,6 +1484,17 @@ void *interpreter(void *pcPnt)
 				r = mem[x];
 				mem[++x] = r;
 			}
+				break;
+				
+			case 9482:              // ROWING
+				mem[g+3] = mem[x];
+				mem[x] = g+3;
+				break;
+
+			case 9483:              // ROWINGD
+				mem[g+5] = mem[x-1];
+				mem[g+6] = mem[x];
+				mem[--x] = g+5;
 				break;
 
 			case ASS:
@@ -2320,10 +2297,12 @@ void import(const char *export)
 	fclose(input);
 
 	threads[0] = pc;
-	mem[pc] = g = pc + 2;			// это l
+	mem[pc] = g = pc + 2;			    // это l
 	mem[g] = mem[g + 1] = 0;
-	mem[pc + 1] = g + maxdisplg;	// это x
+	mem[pc + 1] = g + maxdisplg + 5;	// это x
 	pc = 4;
+	
+	mem[g+2] = mem[g+4] = 1;      // для ROWING mem [g+3] for int, mem[g+5],mem[g+6] for double
 
 	sem_unlink(sem_print);
 	sempr = sem_open(sem_print, O_CREAT, S_IRUSR | S_IWUSR, 1);
