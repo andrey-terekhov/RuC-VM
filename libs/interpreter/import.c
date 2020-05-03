@@ -78,8 +78,7 @@ int mem[MAXMEMSIZE], functions[FUNCSIZE], funcnum;
 int threads[NUMOFTHREADS];	//, curthread, upcurthread;
 int procd, iniprocs[INIPROSIZE], base = 0, adinit, NN;
 FILE *input;
-char sem_print[] = "sem_print", sem_debug[] = "sem_debug";
-sem_t *sempr, *semdeb;
+sem_t sempr, semdeb;
 
 #ifdef ROBOT
 FILE *f1, *f2;	// файлы цифровых датчиков
@@ -653,18 +652,18 @@ void *interpreter(void *pcPnt)
 			case PRINT:
 			{
 				int t;
-				sem_wait(sempr);
+				sem_wait(&sempr);
 				t = mem[pc++];
 				x -= szof(t);
 				auxprint(x + 1, t, 0, '\n');
 				fflush(stdout);
-				sem_post(sempr);
+				sem_post(&sempr);
 			}
 				break;
 
 			case PRINTID:
 			{
-				sem_wait(sempr);
+				sem_wait(&sempr);
 				i = mem[pc++];				// ссылка на identtab
 				prtype = identab[i + 2];
 				r = identab[i + 1] + 2;		// ссылка на reprtab
@@ -685,7 +684,7 @@ void *interpreter(void *pcPnt)
 				}
 
 				fflush(stdout);
-				sem_post(sempr);
+				sem_post(&sempr);
 			}
 				break;
 
@@ -700,19 +699,19 @@ void *interpreter(void *pcPnt)
 			{
 				int sumsize, strbeg;
 
-				sem_wait(sempr);
+				sem_wait(&sempr);
 				sumsize = mem[pc++];
 				strbeg = mem[x--];
 
 				auxprintf(strbeg, x -= sumsize);
 				fflush(stdout);
-				sem_post(sempr);
+				sem_post(&sempr);
 			}
 				break;
 
 			case GETID:
 			{
-				sem_wait(sempr);
+				sem_wait(&sempr);
 				i = mem[pc++];				// ссылка на identtab
 				prtype = identab[i + 2];
 				r = identab[i + 1] + 2;		// ссылка на reprtab
@@ -726,7 +725,7 @@ void *interpreter(void *pcPnt)
 				fflush(stdout);
 
 				auxget(dsp(identab[i + 3], l), prtype);
-				sem_post(sempr);
+				sem_post(&sempr);
 			}
 				break;
 
@@ -2321,8 +2320,7 @@ INTERPRETER_EXPORTED void import(const char *path)
 	mem[pc + 1] = g + maxdisplg;	// это x
 	pc = 4;
 
-	sem_unlink(sem_print);
-	sempr = sem_open(sem_print, O_CREAT, S_IRUSR | S_IWUSR, 1);
+	sem_init(&sempr, 0, 1);
 	t_init();
 	interpreter(&pc);				// номер нити главной программы 0
 	t_destroy();

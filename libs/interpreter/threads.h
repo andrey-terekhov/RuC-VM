@@ -26,8 +26,6 @@
 
 	#define S_IRUSR _S_IREAD
 	#define S_IWUSR _S_IWRITE
-
-	#define SEM_FAILED			NULL
 #endif
 
 

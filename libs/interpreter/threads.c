@@ -46,13 +46,13 @@ int __countTh = 1;
 struct __threadInfo __threads[__COUNT_TH];
 
 int __countSem = 0;
-// sem_t __sems[__COUNT_SEM];
-sem_t *__sems[__COUNT_SEM];
+sem_t __sems[__COUNT_SEM];
 pthread_rwlock_t __lock_t_create;
 pthread_rwlock_t __lock_t_sem_create;
 
 
 // void perror(const char *str);
+
 
 void t_init()
 {
@@ -285,8 +285,7 @@ int t_sem_create(int level)
 {
 	printf("t_sem_create(int)\n");
 	int retVal;
-	sem_t *sem;
-	char csem[10];
+	sem_t sem;
 
 	int res = pthread_rwlock_wrlock(&__lock_t_sem_create);
 	if (res != 0)
@@ -295,10 +294,8 @@ int t_sem_create(int level)
 		exit(EXIT_FAILURE);
 	}
 
-	sprintf(csem, "%d", __countSem);
-	sem_unlink(csem);
-	sem = sem_open(csem, O_CREAT, S_IRUSR | S_IWUSR, level);
-	if (sem == SEM_FAILED)
+	res = sem_init(&sem, 0, level);
+	if (res != 0)
 	{
 		perror(" t_sem_create : Semaphore initilization failed");
 		exit(EXIT_FAILURE);
@@ -335,7 +332,7 @@ void t_sem_wait(int numSem)
 
 	if (numSem >= 0 && numSem < __countSem)
 	{
-		sem_t *sem = __sems[numSem];
+		sem_t sem = __sems[numSem];
 
 		res = pthread_rwlock_unlock(&__lock_t_sem_create);
 		if (res != 0)
@@ -344,7 +341,7 @@ void t_sem_wait(int numSem)
 			exit(EXIT_FAILURE);
 		}
 
-		res = sem_wait(sem);
+		res = sem_wait(&sem);
 		if (res != 0)
 		{
 			perror(" t_sem_wait : Semaphore wait failed");
@@ -370,7 +367,7 @@ void t_sem_post(int numSem)
 
 	if (numSem >= 0 && numSem < __countSem)
 	{
-		sem_t *sem = __sems[numSem];
+		sem_t sem = __sems[numSem];
 
 		res = pthread_rwlock_unlock(&__lock_t_sem_create);
 		if (res != 0)
@@ -379,7 +376,7 @@ void t_sem_post(int numSem)
 			exit(EXIT_FAILURE);
 		}
 
-		res = sem_post(sem);
+		res = sem_post(&sem);
 		if (res != 0)
 		{
 			perror(" t_sem_post : Semaphore post failed");
@@ -527,8 +524,7 @@ void t_destroy()
 
 	for (i = 0; i < __countSem; i++)
 	{
-		// res = sem_destroy(&(__sems[i]));
-		res = sem_close(__sems[i]);
+		res = sem_destroy(&(__sems[i]));
 		if (res != 0)
 		{
 			perror(" t_destroy : sem_destroy of __sems[i] failed");
