@@ -16,6 +16,7 @@
 
 // #define ROBOT
 
+#include "import.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -2267,11 +2268,7 @@ void *interpreter(void *pcPnt)
 	return NULL;
 }
 
-#ifdef _MSC_VER
-__declspec(dllexport) void import(const char *export)
-#else
-void import(const char *export)
-#endif
+INTERPRETER_EXPORTED void import(const char *path)
 {
 	int i;
 	int pc;
@@ -2286,11 +2283,11 @@ void import(const char *export)
 	system("i2cset -y 2 0x48 0x13 0x1000 w");
 #endif
 
-	input = fopen(export, "r");
+	input = fopen(path, "r");
 
 	if (!input)
 	{
-		printf(" %s not found\n", export);
+		printf(" %s not found\n", path);
 		return;
 	}
 

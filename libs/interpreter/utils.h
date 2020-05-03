@@ -14,15 +14,20 @@
  *	limitations under the License.
  */
 
-#ifndef H_UTILS
-#define H_UTILS
+#pragma once
 
 #include <stdio.h>
 #include <stdlib.h>
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void printf_char(int wchar);
 void fprintf_char(FILE *f, int wchar);
 int getf_char();
 
+#ifdef __cplusplus
+} /* extern "C" */
 #endif

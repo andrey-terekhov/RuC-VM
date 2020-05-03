@@ -14,10 +14,10 @@
  *	limitations under the License.
  */
 
-#ifndef H_THREADS
-#define H_THREADS
+#pragma once
 
 #include <fcntl.h>
+
 
 #ifndef _MSC_VER
 	#include <unistd.h>
@@ -30,6 +30,10 @@
 	#define SEM_FAILED			NULL
 #endif
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct msg_info
 {
@@ -58,4 +62,6 @@ void t_sem_post(int numSem);
 void t_msg_send(struct msg_info msg);
 struct msg_info t_msg_receive();
 
+#ifdef __cplusplus
+} /* extern "C" */
 #endif

@@ -14,8 +14,7 @@
  *	limitations under the License.
  */
 
-#ifndef H_DEFS
-#define H_DEFS
+#pragma once
 
 #define MAXREPRTAB								10000
 #define MAXIDENTAB								10000
@@ -726,5 +725,3 @@
 #define nor										99		// nor rd, rs, rt		rd = ~(rs | rt)
 #define slt										102		// slt rd, rs, rt		rd = rs < rt ? 1 : 0
 #define sltu									103		// sltu rd, rs, rt		rd = rs < rt ? 1 : 0		unsigned
-
-#endif
