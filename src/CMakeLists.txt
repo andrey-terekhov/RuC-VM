@@ -3,17 +3,12 @@ cmake_minimum_required(VERSION 3.0.0)
 project(ruc-vm)
 
 
-# Put all libraries to one folder
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
-if(MSVC)
-	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-endif()
 
+file(GLOB SRC "*.c")
 
-# Add libraries
-add_subdirectory(libs)
+add_executable(${PROJECT_NAME} ${SRC})
 
-# Add frontend
-add_subdirectory(src)
+target_link_libraries(${PROJECT_NAME} interpreter)

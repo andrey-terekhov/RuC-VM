@@ -14,7 +14,6 @@
  *	limitations under the License.
  */
 
-#define _CRT_SECURE_NO_WARNINGS
 // #define ROBOT
 
 #include <math.h>
