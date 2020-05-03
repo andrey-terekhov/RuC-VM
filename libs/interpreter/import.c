@@ -2269,6 +2269,7 @@ void *interpreter(void *pcPnt)
 
 INTERPRETER_EXPORTED void import(const char *path)
 {
+	char firstline[100];
 	int i;
 	int pc;
 
@@ -2288,6 +2289,13 @@ INTERPRETER_EXPORTED void import(const char *path)
 	{
 		printf(" %s not found\n", path);
 		return;
+	}
+
+	/* Check shebang, get back to start if there are none */
+	if (fgets(firstline, sizeof(firstline), input) != firstline ||
+		strncmp(firstline, "#!", 2) != 0)
+	{
+		fseek(input, 0, SEEK_SET);
 	}
 
 	fscanf(input, "%i %i %i %i %i %i %i\n", &pc, &funcnum, &id, &rp, &md, &maxdisplg, &wasmain);
