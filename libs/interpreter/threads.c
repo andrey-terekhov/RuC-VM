@@ -15,19 +15,19 @@
  */
 
 #include "threads.h"
+#include <pthread.h>
+#include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#include <pthread.h>
-#include <semaphore.h>
 
 
-#define __COUNT_TH				10
-#define __COUNT_SEM				16
-#define __COUNT_MSGS_FOR_TH		4
+#define __COUNT_TH			10
+#define __COUNT_SEM			16
+#define __COUNT_MSGS_FOR_TH 4
 
-#define TRUE	1
-#define FALSE	0
+#define TRUE  1
+#define FALSE 0
 
 
 struct __threadInfo
