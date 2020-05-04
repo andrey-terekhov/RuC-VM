@@ -68,8 +68,6 @@ int procd, iniprocs[INIPROSIZE], base = 0, adinit, NN;
 FILE *input;
 sem_t sempr, semdeb;
 
-int temp_str[MAXSTRINGL];
-
 
 #ifdef ROBOT
 extern void send_int_to_robot(int, int, const int *);
@@ -77,63 +75,11 @@ extern void send_float_to_robot(int, int, const double *);
 extern void send_string_to_robot(int, int, const char *);
 extern int receive_int_from_robot(int);
 extern double receive_float_from_robot(int);
-extern int *receive_string_from_robot(int);
+// extern int *receive_string_from_robot(int);
 #endif
 
 void *interpreter(void *);
 
-
-void send_int_to_robot(int type, int size, const int *array)
-{
-	printf("send_int_to_robot(%i, %i, { ", type, size);
-
-	for (int i = 0; i < size - 1; i++)
-	{
-		printf("%i, ", array[i]);
-	}
-
-	printf("%i );\n", array[size - 1]);
-}
-
-void send_float_to_robot(int type, int size, const double *array)
-{
-	printf("send_float_to_robot(%i, %i, { ", type, size);
-
-	for (int i = 0; i < size - 1; i++)
-	{
-		printf("%f, ", array[i]);
-	}
-
-	printf("%f });\n", array[size - 1]);
-
-}
-
-void send_string_to_robot(int type, int size, const char *str)
-{
-	printf("send_string_to_robot(%i, %i, \"%s\");\n", type, size, str);
-}
-
-int receive_int_from_robot(int type)
-{
-	return type;
-}
-
-double receive_float_from_robot(int type)
-{
-	return type * 0.1;
-}
-
-int *receive_string_from_robot(int type)
-{
-	temp_str[0] = type;
-
-	for (int i = 1; i <= type; i++)
-	{
-		temp_str[i] = (unsigned char)'?';
-	}
-	
-	return &temp_str[1];
-}
 
 int szof(int type)
 {
@@ -556,7 +502,7 @@ void *interpreter(void *pcPnt)
 				mem[++x] = numTh;
 				break;
 
-// #ifdef ROBOT
+#ifdef ROBOT
 			case SEND_INTC:
 			{
 				int array = mem[x--];
@@ -606,11 +552,8 @@ void *interpreter(void *pcPnt)
 			}
 			break;
 			case RECEIVE_STRINGC:
-			{
-				mem[x] = receive_string_from_robot(mem[x]);
-			}
 			break;
-// #endif
+#endif
 
 			case FUNCBEG:
 				pc = mem[pc + 1];
