@@ -303,6 +303,12 @@
 #define DRAW_NUMBERC							9586
 #define ICONC									9587
 #define UPBC									9588
+#define SEND_INTC								9589
+#define SEND_FLOATC								9590
+#define SEND_STRINGC							9591
+#define RECEIVE_INTC							9592
+#define RECEIVE_FLOATC							9593
+#define RECEIVE_STRINGC							9594
 
 
 // Лексемы
@@ -689,6 +695,7 @@
 
 #define not_float_in_stanfunc					385
 #define not_array_in_stanfunc					386
+
 
 // коды предупреждений
 

@@ -14,8 +14,6 @@
  *	limitations under the License.
  */
 
-// #define ROBOT
-
 #include "import.h"
 #include <math.h>
 #include <stdio.h>
@@ -61,16 +59,6 @@
 #define printf_runtime_crash		13
 #define init_err					14
 
-#ifdef ROBOT
-	#define wrong_motor_num			15
-	#define wrong_motor_pow			16
-	#define wrong_digsensor_num		17
-	#define wrong_ansensor_num		18
-	#define wrong_robot_com			19
-
-	#define I2CBUFFERSIZE			50
-#endif
-
 
 int g, xx, iniproc, maxdisplg, wasmain;
 int reprtab[MAXREPRTAB], rp, identab[MAXIDENTAB], id, modetab[MAXMODETAB], md;
@@ -80,18 +68,17 @@ int procd, iniprocs[INIPROSIZE], base = 0, adinit, NN;
 FILE *input;
 sem_t sempr, semdeb;
 
-#ifdef ROBOT
-FILE *f1, *f2;	// файлы цифровых датчиков
-const char *JD1 = "/sys/devices/platform/da850_trik/sensor_d1";
-const char *JD2 = "/sys/devices/platform/da850_trik/sensor_d2";
-#endif
 
+#ifdef ROBOT
+extern void send_int_to_robot(int, int, const int *);
+extern void send_float_to_robot(int, int, const float *);
+extern void send_string_to_robot(int, int, const char *);
+extern int receive_int_from_robot(int);
+extern float receive_float_from_robot(int);
+extern char *receive_string_from_robot(int);
+#endif
 
 void *interpreter(void *);
-
-#ifdef ROBOT
-void rungetcommand(const char *);
-#endif
 
 
 int szof(int type)
@@ -151,23 +138,6 @@ void runtimeerr(int e, int i, int r)
 		case init_err:
 			printf(" количество элементов инициализации %i не совпадает с количеством элементов %i массива\n", i, r);
 			break;
-#ifdef ROBOT
-		case wrong_motor_num:
-			printf(" номер силового мотора %i, а должен быть от 1 до 4\n", i);
-			break;
-		case wrong_motor_pow:
-			printf(" задаваемая мощность мотора %i равна %i, а должна быть от -100 до 100\n", i, r);
-			break;
-		case wrong_digsensor_num:
-			printf(" номер цифрового сенсора %i, а должен быть 1 или 2\n", i);
-			break;
-		case wrong_ansensor_num:
-			printf(" номер аналогового сенсора %i, а должен быть от 1 до 6\n", i);
-			break;
-		case wrong_robot_com:
-			printf(" робот не может исполнить команду\n");
-			break;
-#endif
 	}
 
 	exit(3);
@@ -536,113 +506,19 @@ void *interpreter(void *pcPnt)
 				break;
 
 #ifdef ROBOT
-			case WIFI_CONNECTC:
+			case SEND_INTC:
 				break;
-			case BLYNK_AUTHORIZATIONC:
+			case SEND_FLOATC:
 				break;
-			case BLYNK_SENDC:
-				break;
-			case BLYNK_RECEIVEC:
-				break;
-			case BLYNK_NOTIFICATIONC:
-				break;
-			case BLYNK_PROPERTYC:
-				break;
-			case BLYNK_LCDC:
-				break;
-			case BLYNK_TERMINALC:
+			case SEND_STRINGC:
 				break;
 
-			case PIXELC:
+			case RECEIVE_INTC:
 				break;
-			case LINEC:
+			case RECEIVE_FLOATC:
 				break;
-			case RECTANGLEC:
+			case RECEIVE_STRINGC:
 				break;
-			case ELLIPSEC:
-				break;
-			case CLEARC:
-				break;
-			case DRAW_STRINGC:
-				break;
-			case DRAW_NUMBERC:
-				break;
-			case ICONC:
-				break;
-
-			case SETSIGNALC:
-			{
-				int array_prt_2 = mem[x--];
-				int array_prt = mem[x--];
-				int sensortype = mem[x--];
-
-				if (sensortype == 0)
-				{
-					printf("setsignal(RELAY, { %d, %d }, %d, %d, %d, %d)\n", (&mem[array_prt])[0], (&mem[array_prt])[1], (&mem[array_prt_2])[0], (&mem[array_prt_2])[1], (&mem[array_prt_2])[2], (&mem[array_prt_2])[3]);
-				}
-				else
-				{
-					printf("setsignal(LED, { %d, %d }, %d, %d, %d, %d, %d, %d, %d)\n", (&mem[array_prt])[0], (&mem[array_prt])[1], (&mem[array_prt_2])[0], (&mem[array_prt_2])[1], (&mem[array_prt_2])[2], (&mem[array_prt_2])[3], (&mem[array_prt_2])[4], (&mem[array_prt_2])[5], (&mem[array_prt_2])[6]);
-				}
-			}
-				break;
-
-			case SETMOTORC:
-			{
-				int r = mem[x--];
-				int n = mem[x--];
-				if (n < 1 || n > 4)
-				{
-					runtimeerr(wrong_motor_num, n, 0);
-				}
-
-				if (r < -100 || r > 100)
-				{
-					runtimeerr(wrong_motor_pow, n, r);
-				}
-
-				memset(i2ccommand, '\0', I2CBUFFERSIZE);
-				printf("i2cset -y 2 0x48 0x%x 0x%x b\n", 0x14 + n - 1, r);
-				snprintf(i2ccommand, I2CBUFFERSIZE, "i2cset -y 2 0x48 0x%x 0x%x b", 0x14 + n - 1, r);
-				system(i2ccommand);
-			}
-				break;
-
-			case GETDIGSENSORC:
-			{
-				int n = mem[x];
-				if (n < 1 || n > 2)
-				{
-					runtimeerr(wrong_digsensor_num, n, 0);
-				}
-
-				if (n == 1)
-				{
-					fscanf(f1, "%i", &i);
-				}
-				else
-				{
-					fscanf(f2, "%i", &i);
-				}
-
-				mem[x] = i;
-			}
-			break;
-
-			case GETANSENSORC:
-			{
-				int n = mem[x];
-				if (n < 1 || n > 6)
-				{
-					runtimeerr(wrong_ansensor_num, n, 0);
-				}
-
-				memset(i2ccommand, '\0', I2CBUFFERSIZE);
-				printf("i2cget -y 2 0x48 0x%x\n", 0x26 - n);
-				snprintf(i2ccommand, I2CBUFFERSIZE, "i2cget -y 2 0x48 0x%x", 0x26 - n);
-				mem[x] = rungetcommand(i2ccommand);
-			}
-			break;
 #endif
 
 			case FUNCBEG:
@@ -2250,16 +2126,6 @@ INTERPRETER_EXPORTED void import(const char *path)
 	int i;
 	int pc;
 
-#ifdef ROBOT
-	f1 = fopen(JD1, "r");						// файлы цифровых датчиков
-	f2 = fopen(JD2, "r");
-	printf("stage 1\n");
-	system("i2cset -y 2 0x48 0x10 0x1000 w");	// инициализация силовых моторов
-	system("i2cset -y 2 0x48 0x11 0x1000 w");
-	system("i2cset -y 2 0x48 0x12 0x1000 w");
-	system("i2cset -y 2 0x48 0x13 0x1000 w");
-#endif
-
 	input = fopen(path, "r");
 
 	if (!input)
@@ -2311,38 +2177,4 @@ INTERPRETER_EXPORTED void import(const char *path)
 	t_init();
 	interpreter(&pc);				// номер нити главной программы 0
 	t_destroy();
-
-#ifdef ROBOT
-	system("i2cset -y 2 0x48 0x10 0 w");	// отключение силовых моторов
-	system("i2cset -y 2 0x48 0x11 0 w");
-	system("i2cset -y 2 0x48 0x12 0 w");
-	system("i2cset -y 2 0x48 0x13 0 w");
-	fclose(f1);
-	fclose(f2);
-#endif
 }
-
-#ifdef ROBOT
-int rungetcommand(const char *command)
-{
-	FILE *fp;
-	long x = -1;
-	char path[100] = { '\0' };
-
-	/* Open the command for reading. */
-	fp = popen(command, "r");
-	if (fp == NULL)
-	{
-		runtimeerr(wrong_robot_com, 0, 0);
-	}
-
-	/* Read the output a line at a time - output it. */
-	while (fgets(path, sizeof(path) - 1, fp) != NULL)
-	{
-		x = strtol(path, NULL, 16);
-		printf("[%s] %ld\n", path, x);
-	}
-	pclose(fp);
-	return x;	// ??????
-}
-#endif
