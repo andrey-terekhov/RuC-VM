@@ -68,18 +68,72 @@ int procd, iniprocs[INIPROSIZE], base = 0, adinit, NN;
 FILE *input;
 sem_t sempr, semdeb;
 
+int temp_str[MAXSTRINGL];
+
 
 #ifdef ROBOT
 extern void send_int_to_robot(int, int, const int *);
-extern void send_float_to_robot(int, int, const float *);
+extern void send_float_to_robot(int, int, const double *);
 extern void send_string_to_robot(int, int, const char *);
 extern int receive_int_from_robot(int);
-extern float receive_float_from_robot(int);
-extern char *receive_string_from_robot(int);
+extern double receive_float_from_robot(int);
+extern int *receive_string_from_robot(int);
 #endif
 
 void *interpreter(void *);
 
+
+void send_int_to_robot(int type, int size, const int *array)
+{
+	printf("send_int_to_robot(%i, %i, { ", type, size);
+
+	for (int i = 0; i < size - 1; i++)
+	{
+		printf("%i, ", array[i]);
+	}
+
+	printf("%i );\n", array[size - 1]);
+}
+
+void send_float_to_robot(int type, int size, const double *array)
+{
+	printf("send_float_to_robot(%i, %i, { ", type, size);
+
+	for (int i = 0; i < size - 1; i++)
+	{
+		printf("%f, ", array[i]);
+	}
+
+	printf("%f });\n", array[size - 1]);
+
+}
+
+void send_string_to_robot(int type, int size, const char *str)
+{
+	printf("send_string_to_robot(%i, %i, \"%s\");\n", type, size, str);
+}
+
+int receive_int_from_robot(int type)
+{
+	return type;
+}
+
+double receive_float_from_robot(int type)
+{
+	return type * 0.1;
+}
+
+int *receive_string_from_robot(int type)
+{
+	temp_str[0] = type;
+
+	for (int i = 1; i <= type; i++)
+	{
+		temp_str[i] = (unsigned char)'?';
+	}
+	
+	return &temp_str[1];
+}
 
 int szof(int type)
 {
@@ -502,73 +556,61 @@ void *interpreter(void *pcPnt)
 				mem[++x] = numTh;
 				break;
 
-				//#ifdef ROBOT
+// #ifdef ROBOT
 			case SEND_INTC:
 			{
-				int i;
-				int p2 = mem[x--];
-				int p1 = mem[x--];
-				int N = mem[p2 - 1];
-				printf("send_int p1= %i, N= %i\n", p1, N);
-				for (i = 0; i < N; ++i)
-				{
-					printf("%i)%i ", i, mem[p2 + i]);
-				}
-				printf("\n");
+				int array = mem[x--];
+				int type = mem[x--];
+				int size = mem[array - 1];
+
+				send_int_to_robot(type, size, &mem[array]);
 			}
 			break;
 			case SEND_FLOATC:
 			{
-				int i;
-				double f;
-				int p2 = mem[x--];
-				int p1 = mem[x--];
-				int N = mem[p2 - 1];
-				printf("send_float p1= %i, N= %i\n", p1, N);
-				for (i = 0; i < 2 * N; i += 2)
-				{
-					memcpy(&f, &mem[p2 + i], sizeof(double));
-					printf("%i)%f ", i, f);
-					printf("\n");
-				}
+				int array = mem[x--];
+				int type = mem[x--];
+				int size = mem[array - 1];
+
+				send_float_to_robot(type, size, (double *)&mem[array]);
 			}
 			break;
 			case SEND_STRINGC:
 			{
-				int i;
-				int p2 = mem[x--];
-				int p1 = mem[x--];
-				int N = mem[p2 - 1];
-				printf("send_string p1= %i, N= %i\n", p1, N);
-				for (i = 0; i < N; ++i)
-				{
-					printf("%i)%c ", i, mem[p2 + i]);
-				}
-				printf("\n");
-			}
+				int array = mem[x--];
+				int type = mem[x--];
+				int size = mem[array - 1];
 
+				char str[MAXSTRINGL];
+
+				for (int i = 0; i < size; i++)
+				{
+					str[i] = mem[array + i];
+				}
+				str[size] = '\0';
+
+				send_string_to_robot(type, size, str);
+			}
 			break;
 
 			case RECEIVE_INTC:
 			{
-				int i = mem[x];
-				mem[x] = i * 2;
+				mem[x] = receive_int_from_robot(mem[x]);
 			}
 			break;
 			case RECEIVE_FLOATC:
 			{
-				double f = 3.14;
-				memcpy(&mem[x], &f, sizeof(double));
-				++x;
+				double temp = receive_float_from_robot(mem[x]);
+				memcpy(&mem[x], &temp, sizeof(double));
+				x++;
 			}
 			break;
 			case RECEIVE_STRINGC:
 			{
-				mem[x] = aux[1];
+				mem[x] = receive_string_from_robot(mem[x]);
 			}
-
 			break;
-				//#endif
+// #endif
 
 			case FUNCBEG:
 				pc = mem[pc + 1];
