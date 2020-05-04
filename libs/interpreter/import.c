@@ -368,6 +368,7 @@ int dsp(int di, int l)
 
 void *interpreter(void *pcPnt)
 {
+	int aux[] = { 3, 1, 2, 3 };
 	int l;
 	int x;
 	int origpc = *((int *)pcPnt);
@@ -501,21 +502,73 @@ void *interpreter(void *pcPnt)
 				mem[++x] = numTh;
 				break;
 
-#ifdef ROBOT
+				//#ifdef ROBOT
 			case SEND_INTC:
-				break;
+			{
+				int i;
+				int p2 = mem[x--];
+				int p1 = mem[x--];
+				int N = mem[p2 - 1];
+				printf("send_int p1= %i, N= %i\n", p1, N);
+				for (i = 0; i < N; ++i)
+				{
+					printf("%i)%i ", i, mem[p2 + i]);
+				}
+				printf("\n");
+			}
+			break;
 			case SEND_FLOATC:
-				break;
+			{
+				int i;
+				double f;
+				int p2 = mem[x--];
+				int p1 = mem[x--];
+				int N = mem[p2 - 1];
+				printf("send_float p1= %i, N= %i\n", p1, N);
+				for (i = 0; i < 2 * N; i += 2)
+				{
+					memcpy(&f, &mem[p2 + i], sizeof(double));
+					printf("%i)%f ", i, f);
+					printf("\n");
+				}
+			}
+			break;
 			case SEND_STRINGC:
-				break;
+			{
+				int i;
+				int p2 = mem[x--];
+				int p1 = mem[x--];
+				int N = mem[p2 - 1];
+				printf("send_string p1= %i, N= %i\n", p1, N);
+				for (i = 0; i < N; ++i)
+				{
+					printf("%i)%c ", i, mem[p2 + i]);
+				}
+				printf("\n");
+			}
+
+			break;
 
 			case RECEIVE_INTC:
-				break;
+			{
+				int i = mem[x];
+				mem[x] = i * 2;
+			}
+			break;
 			case RECEIVE_FLOATC:
-				break;
+			{
+				double f = 3.14;
+				memcpy(&mem[x], &f, sizeof(double));
+				++x;
+			}
+			break;
 			case RECEIVE_STRINGC:
-				break;
-#endif
+			{
+				mem[x] = aux[1];
+			}
+
+			break;
+				//#endif
 
 			case FUNCBEG:
 				pc = mem[pc + 1];
@@ -2166,8 +2219,8 @@ INTERPRETER_EXPORTED void import(const char *path)
 	mem[g] = mem[g + 1] = 0;
 	mem[pc + 1] = g + maxdisplg + 5; // это x
 	pc = 4;
-	
-	mem[g+2] = mem[g+4] = 1;      // для ROWING mem [g+3] for int, mem[g+5],mem[g+6] for double
+
+	mem[g + 2] = mem[g + 4] = 1; // для ROWING mem [g+3] for int, mem[g+5],mem[g+6] for double
 
 	mem[g + 2] = mem[g + 4] = 1; // для ROWING mem [g+3] for int, mem[g+5],mem[g+6] for double
 
