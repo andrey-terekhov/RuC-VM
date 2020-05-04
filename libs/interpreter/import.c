@@ -552,7 +552,7 @@ void *interpreter(void *pcPnt)
 			}
 			break;
 			case RECEIVE_STRINGC:
-			break;
+				break;
 #endif
 
 			case FUNCBEG:
@@ -1395,12 +1395,12 @@ void *interpreter(void *pcPnt)
 			}
 			break;
 
-			case 9482: // ROWING
+			case ROWING: // ROWING
 				mem[g + 3] = mem[x];
 				mem[x] = g + 3;
 				break;
 
-			case 9483: // ROWINGD
+			case ROWINGD: // ROWINGD
 				mem[g + 5] = mem[x - 1];
 				mem[g + 6] = mem[x];
 				mem[--x] = g + 5;
