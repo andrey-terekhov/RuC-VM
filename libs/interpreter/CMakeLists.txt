@@ -3,37 +3,15 @@ cmake_minimum_required(VERSION 3.0.0)
 project(interpreter)
 
 
-if(MSVC)
-	add_library(pthread STATIC IMPORTED)
-
-	if(CMAKE_CL_64)
-		set_property(TARGET pthread PROPERTY
-			IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/../pthread/x64/pthreadVC2.lib")
-
-		file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../pthread/x64/pthreadVC2.dll" DESTINATION "${CMAKE_BINARY_DIR}/Debug")
-		file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../pthread/x64/pthreadVC2.dll" DESTINATION "${CMAKE_BINARY_DIR}/Release")
-	else()
-		set_property(TARGET pthread PROPERTY
-			IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/../pthread/x86/pthreadVC2.lib")
-
-		file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../pthread/x86/pthreadVC2.dll" DESTINATION "${CMAKE_BINARY_DIR}/Debug")
-		file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/../pthread/x86/pthreadVC2.dll" DESTINATION "${CMAKE_BINARY_DIR}/Release")
-	endif()
-
-	include_directories("../pthread")
-else()
-	find_package(Threads REQUIRED)
-endif()
-
-
 file(GLOB SRC "*.c")
 add_library(${PROJECT_NAME} SHARED ${SRC})
-target_include_directories(${PROJECT_NAME} PRIVATE ".")
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 
 if(MSVC)
-	target_compile_options(${PROJECT_NAME} PRIVATE -DHAVE_STRUCT_TIMESPEC)
 	target_link_libraries(${PROJECT_NAME} pthread)
+	target_compile_options(${PROJECT_NAME} PRIVATE -DHAVE_STRUCT_TIMESPEC)
 else()
+	find_package(Threads REQUIRED)
 	target_link_libraries(${PROJECT_NAME} m ${CMAKE_THREAD_LIBS_INIT})
 endif()

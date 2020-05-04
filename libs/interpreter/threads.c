@@ -14,22 +14,20 @@
  *	limitations under the License.
  */
 
-#define _CRT_SECURE_NO_WARNINGS
-
 #include "threads.h"
+#include <pthread.h>
+#include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#include <pthread.h>
-#include <semaphore.h>
 
 
-#define __COUNT_TH				10
-#define __COUNT_SEM				16
-#define __COUNT_MSGS_FOR_TH		4
+#define __COUNT_TH			10
+#define __COUNT_SEM			16
+#define __COUNT_MSGS_FOR_TH 4
 
-#define TRUE	1
-#define FALSE	0
+#define TRUE  1
+#define FALSE 0
 
 
 struct __threadInfo
@@ -48,13 +46,13 @@ int __countTh = 1;
 struct __threadInfo __threads[__COUNT_TH];
 
 int __countSem = 0;
-// sem_t __sems[__COUNT_SEM];
-sem_t *__sems[__COUNT_SEM];
+sem_t __sems[__COUNT_SEM];
 pthread_rwlock_t __lock_t_create;
 pthread_rwlock_t __lock_t_sem_create;
 
 
 // void perror(const char *str);
+
 
 void t_init()
 {
@@ -91,7 +89,6 @@ void t_init()
 
 int __t_create(pthread_attr_t *attr, void *(*func)(void *), void *arg, int isDetach)
 {
-	printf("__t_create(pthread_attr_t, void*, void*, int)\n");
 	pthread_t th;
 	int retVal;
 
@@ -157,13 +154,11 @@ int __t_create(pthread_attr_t *attr, void *(*func)(void *), void *arg, int isDet
 
 int t_create_inner(void *(*func)(void *), void *arg)
 {
-	printf("t_create_inner(void*, void*)\n");
 	return __t_create(NULL, func, arg, FALSE);
 }
 
 int t_createDetached(void *(*func)(void *))
 {
-	printf("t_createDetached(void*)\n");
 	pthread_attr_t attr;
 
 	int res = pthread_attr_init(&attr);
@@ -185,13 +180,11 @@ int t_createDetached(void *(*func)(void *))
 
 void t_exit()
 {
-	printf("t_exit()\n");
 	pthread_exit(NULL);
 }
 
 void t_join(int numTh)
 {
-	printf("t_join(int)\n");
 	int res = pthread_rwlock_rdlock(&__lock_t_create);
 	if (res != 0)
 	{
@@ -275,7 +268,6 @@ int t_getThNum()
 
 void t_sleep(int miliseconds)
 {
-	printf("t_sleep(int)\n");
 #ifdef _MSC_VER
 	Sleep(miliseconds);
 #else
@@ -285,10 +277,8 @@ void t_sleep(int miliseconds)
 
 int t_sem_create(int level)
 {
-	printf("t_sem_create(int)\n");
 	int retVal;
-	sem_t *sem;
-	char csem[10];
+	sem_t sem;
 
 	int res = pthread_rwlock_wrlock(&__lock_t_sem_create);
 	if (res != 0)
@@ -297,10 +287,8 @@ int t_sem_create(int level)
 		exit(EXIT_FAILURE);
 	}
 
-	sprintf(csem, "%d", __countSem);
-	sem_unlink(csem);
-	sem = sem_open(csem, O_CREAT, S_IRUSR | S_IWUSR, level);
-	if (sem == SEM_FAILED)
+	res = sem_init(&sem, 0, level);
+	if (res != 0)
 	{
 		perror(" t_sem_create : Semaphore initilization failed");
 		exit(EXIT_FAILURE);
@@ -326,7 +314,6 @@ int t_sem_create(int level)
 
 void t_sem_wait(int numSem)
 {
-	printf("t_sem_wait(int)\n");
 	int res = pthread_rwlock_rdlock(&__lock_t_sem_create);
 	// printf("t_sem_wait numSem= %i __countSem=  %i\n", numSem, __countSem);
 	if (res != 0)
@@ -337,7 +324,7 @@ void t_sem_wait(int numSem)
 
 	if (numSem >= 0 && numSem < __countSem)
 	{
-		sem_t *sem = __sems[numSem];
+		sem_t sem = __sems[numSem];
 
 		res = pthread_rwlock_unlock(&__lock_t_sem_create);
 		if (res != 0)
@@ -346,7 +333,7 @@ void t_sem_wait(int numSem)
 			exit(EXIT_FAILURE);
 		}
 
-		res = sem_wait(sem);
+		res = sem_wait(&sem);
 		if (res != 0)
 		{
 			perror(" t_sem_wait : Semaphore wait failed");
@@ -362,7 +349,6 @@ void t_sem_wait(int numSem)
 
 void t_sem_post(int numSem)
 {
-	printf("t_sem_post(int)\n");
 	int res = pthread_rwlock_rdlock(&__lock_t_sem_create);
 	if (res != 0)
 	{
@@ -372,7 +358,7 @@ void t_sem_post(int numSem)
 
 	if (numSem >= 0 && numSem < __countSem)
 	{
-		sem_t *sem = __sems[numSem];
+		sem_t sem = __sems[numSem];
 
 		res = pthread_rwlock_unlock(&__lock_t_sem_create);
 		if (res != 0)
@@ -381,7 +367,7 @@ void t_sem_post(int numSem)
 			exit(EXIT_FAILURE);
 		}
 
-		res = sem_post(sem);
+		res = sem_post(&sem);
 		if (res != 0)
 		{
 			perror(" t_sem_post : Semaphore post failed");
@@ -397,7 +383,6 @@ void t_sem_post(int numSem)
 
 void t_msg_send(struct msg_info msg)
 {
-	printf("t_msg_send(struct msg_info)\n");
 	int res = pthread_rwlock_rdlock(&__lock_t_create);
 	if (res != 0)
 	{
@@ -457,7 +442,6 @@ void t_msg_send(struct msg_info msg)
 
 struct msg_info t_msg_receive()
 {
-	printf("t_msg_receive()\n");
 	int numTh;
 	struct msg_info msg;
 
@@ -529,8 +513,7 @@ void t_destroy()
 
 	for (i = 0; i < __countSem; i++)
 	{
-		// res = sem_destroy(&(__sems[i]));
-		res = sem_close(__sems[i]);
+		res = sem_destroy(&(__sems[i]));
 		if (res != 0)
 		{
 			perror(" t_destroy : sem_destroy of __sems[i] failed");

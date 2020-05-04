@@ -14,14 +14,22 @@
  *	limitations under the License.
  */
 
-#ifndef H_IMPORT
-#define H_IMPORT
+#pragma once
 
 
 #ifdef _MSC_VER
-__declspec(dllexport) void import(const char *export);
+	#define INTERPRETER_EXPORTED __declspec(dllexport)
 #else
-void import(const char *export);
+	#define INTERPRETER_EXPORTED
 #endif
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+INTERPRETER_EXPORTED void import(const char *path);
+
+#ifdef __cplusplus
+} /* extern "C" */
 #endif

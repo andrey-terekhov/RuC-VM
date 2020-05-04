@@ -14,17 +14,15 @@
  *	limitations under the License.
  */
 
-#define _CRT_SECURE_NO_WARNINGS
-// #define ROBOT
-
+#include "import.h"
+#include "threads.h"
+#include "utils.h"
 #include <math.h>
+#include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <semaphore.h>
-#include "threads.h"
-#include "utils.h"
 
 /*
  *	Я исхожу из того, что нумерация нитей процедурой t_create начинается с 1 и идет последовательно
@@ -46,64 +44,48 @@
 #include "defs.h"
 
 
-#define index_out_of_range			1
-#define wrong_kop					2
-#define wrong_arr_init				3
-#define wrong_number_of_elems		4
-#define zero_devide					5
-#define float_zero_devide			6
-#define mem_overflow				7
-#define sqrt_from_negat				8
-#define log_from_negat				9
-#define log10_from_negat			10
-#define wrong_asin					11
-#define wrong_string_init			12
-#define printf_runtime_crash		13
-#define init_err					14
-
-#ifdef ROBOT
-	#define wrong_motor_num			15
-	#define wrong_motor_pow			16
-	#define wrong_digsensor_num		17
-	#define wrong_ansensor_num		18
-	#define wrong_robot_com			19
-
-	#define I2CBUFFERSIZE			50
-#endif
+#define index_out_of_range	  1
+#define wrong_kop			  2
+#define wrong_arr_init		  3
+#define wrong_number_of_elems 4
+#define zero_devide			  5
+#define float_zero_devide	  6
+#define mem_overflow		  7
+#define sqrt_from_negat		  8
+#define log_from_negat		  9
+#define log10_from_negat	  10
+#define wrong_asin			  11
+#define wrong_string_init	  12
+#define printf_runtime_crash  13
+#define init_err			  14
 
 
 int g, xx, iniproc, maxdisplg, wasmain;
 int reprtab[MAXREPRTAB], rp, identab[MAXIDENTAB], id, modetab[MAXMODETAB], md;
 int mem[MAXMEMSIZE], functions[FUNCSIZE], funcnum;
-int threads[NUMOFTHREADS];	//, curthread, upcurthread;
+int threads[NUMOFTHREADS]; //, curthread, upcurthread;
 int procd, iniprocs[INIPROSIZE], base = 0, adinit, NN;
 FILE *input;
-char sem_print[] = "sem_print", sem_debug[] = "sem_debug";
-sem_t *sempr, *semdeb;
+sem_t sempr, semdeb;
+
 
 #ifdef ROBOT
-FILE *f1, *f2;	// файлы цифровых датчиков
-const char *JD1 = "/sys/devices/platform/da850_trik/sensor_d1";
-const char *JD2 = "/sys/devices/platform/da850_trik/sensor_d2";
+extern void send_int_to_robot(int, int, const int *);
+extern void send_float_to_robot(int, int, const float *);
+extern void send_string_to_robot(int, int, const char *);
+extern int receive_int_from_robot(int);
+extern float receive_float_from_robot(int);
+extern char *receive_string_from_robot(int);
 #endif
-
 
 void *interpreter(void *);
-
-#ifdef ROBOT
-void rungetcommand(const char *);
-#endif
 
 
 int szof(int type)
 {
 	return modetab[type] == MARRAY
-				? 1
-				: type == LFLOAT
-					? 2
-					: (type > 0 && modetab[type] == MSTRUCT)
-						? modetab[type + 1]
-						: 1;
+			   ? 1
+			   : type == LFLOAT ? 2 : (type > 0 && modetab[type] == MSTRUCT) ? modetab[type + 1] : 1;
 }
 
 void runtimeerr(int e, int i, int r)
@@ -152,23 +134,6 @@ void runtimeerr(int e, int i, int r)
 		case init_err:
 			printf(" количество элементов инициализации %i не совпадает с количеством элементов %i массива\n", i, r);
 			break;
-#ifdef ROBOT
-		case wrong_motor_num:
-			printf(" номер силового мотора %i, а должен быть от 1 до 4\n", i);
-			break;
-		case wrong_motor_pow:
-			printf(" задаваемая мощность мотора %i равна %i, а должна быть от -100 до 100\n", i, r);
-			break;
-		case wrong_digsensor_num:
-			printf(" номер цифрового сенсора %i, а должен быть 1 или 2\n", i);
-			break;
-		case wrong_ansensor_num:
-			printf(" номер аналогового сенсора %i, а должен быть от 1 до 6\n", i);
-			break;
-		case wrong_robot_com:
-			printf(" робот не может исполнить команду\n");
-			break;
-#endif
 	}
 
 	exit(3);
@@ -201,25 +166,25 @@ void auxprintf(int strbeg, int databeg)
 			switch (mem[++i])
 			{
 				case 'i':
-				case 1094:	// ц
+				case 1094: // ц
 					printf("%i", mem[curdata++]);
 					break;
 
 				case 'c':
-				case 1083:	// л
+				case 1083: // л
 					printf_char(mem[curdata++]);
 					break;
 
 				case 'f':
-				case 1074:	// в
+				case 1074: // в
 				{
 					printf("%lf", *((double *)(&mem[curdata])));
 					curdata += 2;
 				}
-					break;
+				break;
 
 				case 's':
-				case 1089:	// с
+				case 1089: // с
 				{
 					for (j = mem[curdata]; j - mem[curdata] < mem[mem[curdata] - 1]; ++j)
 					{
@@ -227,7 +192,7 @@ void auxprintf(int strbeg, int databeg)
 					}
 					curdata++;
 				}
-					break;
+				break;
 
 				case '%':
 					printf("%%");
@@ -272,7 +237,7 @@ void auxprint(int beg, int t, char before, char after)
 	{
 		printf(" значения типа ПУСТО печатать нельзя\n");
 	}
-	else if (modetab[t] == MARRAY)	// здесь t уже точно положительный
+	else if (modetab[t] == MARRAY) // здесь t уже точно положительный
 	{
 		int rr = r;
 		int i;
@@ -348,7 +313,7 @@ void auxget(int beg, int t)
 	{
 		printf(" значения типа ПУСТО вводить нельзя\n");
 	}
-	else if (modetab[t] == MARRAY)	// здесь t уже точно положительный
+	else if (modetab[t] == MARRAY) // здесь t уже точно положительный
 	{
 		int rr = mem[beg];
 		int type = modetab[t + 1];
@@ -405,7 +370,7 @@ void *interpreter(void *pcPnt)
 {
 	int l;
 	int x;
-	int origpc = *((int *) pcPnt);
+	int origpc = *((int *)pcPnt);
 	int numTh = t_getThNum();
 	int N;
 	int bounds[100];
@@ -434,7 +399,7 @@ void *interpreter(void *pcPnt)
 		{
 			threads[numTh] = cur0 = numTh * MAXMEMTHREAD;
 			l = mem[threads[numTh]] = threads[numTh] + 2;
-			x = mem[threads[numTh]] = l + mem[pc - 2];	// l + maxdispl
+			x = mem[threads[numTh]] = l + mem[pc - 2]; // l + maxdispl
 			mem[l + 2] = -1;
 		}
 		else
@@ -463,24 +428,24 @@ void *interpreter(void *pcPnt)
 				flagstop = 0;
 				xx = x;
 			}
-				break;
+			break;
 
 			case CREATEDIRECTC:
 			{
 				i = pc;
 				mem[++x] = t_create_inner(interpreter, (void *)&i);
 			}
-				break;
+			break;
 
 			case CREATEC:
 			{
 				int i;
 				i = mem[x];
 				entry = functions[i > 0 ? i : mem[l - i]];
-				i = entry + 3;	// новый pc
+				i = entry + 3; // новый pc
 				mem[x] = t_create_inner(interpreter, (void *)&i);
 			}
-				break;
+			break;
 
 			case JOINC:
 				t_join(mem[x--]);
@@ -521,7 +486,7 @@ void *interpreter(void *pcPnt)
 				mem[++x] = m.numTh;
 				mem[++x] = m.data;
 			}
-				break;
+			break;
 
 			case MSGSENDC:
 			{
@@ -530,120 +495,26 @@ void *interpreter(void *pcPnt)
 				m.numTh = mem[x--];
 				t_msg_send(m);
 			}
-				break;
+			break;
 
 			case GETNUMC:
 				mem[++x] = numTh;
 				break;
 
 #ifdef ROBOT
-			case WIFI_CONNECTC:
+			case SEND_INTC:
 				break;
-			case BLYNK_AUTHORIZATIONC:
+			case SEND_FLOATC:
 				break;
-			case BLYNK_SENDC:
-				break;
-			case BLYNK_RECEIVEC:
-				break;
-			case BLYNK_NOTIFICATIONC:
-				break;
-			case BLYNK_PROPERTYC:
-				break;
-			case BLYNK_LCDC:
-				break;
-			case BLYNK_TERMINALC:
+			case SEND_STRINGC:
 				break;
 
-			case PIXELC:
+			case RECEIVE_INTC:
 				break;
-			case LINEC:
+			case RECEIVE_FLOATC:
 				break;
-			case RECTANGLEC:
+			case RECEIVE_STRINGC:
 				break;
-			case ELLIPSEC:
-				break;
-			case CLEARC:
-				break;
-			case DRAW_STRINGC:
-				break;
-			case DRAW_NUMBERC:
-				break;
-			case ICONC:
-				break;
-
-			case SETSIGNALC:
-			{
-				int array_prt_2 = mem[x--];
-				int array_prt = mem[x--];
-				int sensortype = mem[x--];
-
-				if (sensortype == 0)
-				{
-					printf("setsignal(RELAY, { %d, %d }, %d, %d, %d, %d)\n", (&mem[array_prt])[0], (&mem[array_prt])[1], (&mem[array_prt_2])[0], (&mem[array_prt_2])[1], (&mem[array_prt_2])[2], (&mem[array_prt_2])[3]);
-				}
-				else
-				{
-					printf("setsignal(LED, { %d, %d }, %d, %d, %d, %d, %d, %d, %d)\n", (&mem[array_prt])[0], (&mem[array_prt])[1], (&mem[array_prt_2])[0], (&mem[array_prt_2])[1], (&mem[array_prt_2])[2], (&mem[array_prt_2])[3], (&mem[array_prt_2])[4], (&mem[array_prt_2])[5], (&mem[array_prt_2])[6]);
-				}
-			}
-				break;
-
-			case SETMOTORC:
-			{
-				int r = mem[x--];
-				int n = mem[x--];
-				if (n < 1 || n > 4)
-				{
-					runtimeerr(wrong_motor_num, n, 0);
-				}
-
-				if (r < -100 || r > 100)
-				{
-					runtimeerr(wrong_motor_pow, n, r);
-				}
-
-				memset(i2ccommand, '\0', I2CBUFFERSIZE);
-				printf("i2cset -y 2 0x48 0x%x 0x%x b\n", 0x14 + n - 1, r);
-				snprintf(i2ccommand, I2CBUFFERSIZE, "i2cset -y 2 0x48 0x%x 0x%x b", 0x14 + n - 1, r);
-				system(i2ccommand);
-			}
-				break;
-
-			case GETDIGSENSORC:
-			{
-				int n = mem[x];
-				if (n < 1 || n > 2)
-				{
-					runtimeerr(wrong_digsensor_num, n, 0);
-				}
-
-				if (n == 1)
-				{
-					fscanf(f1, "%i", &i);
-				}
-				else
-				{
-					fscanf(f2, "%i", &i);
-				}
-
-				mem[x] = i;
-			}
-			break;
-
-			case GETANSENSORC:
-			{
-				int n = mem[x];
-				if (n < 1 || n > 6)
-				{
-					runtimeerr(wrong_ansensor_num, n, 0);
-				}
-
-				memset(i2ccommand, '\0', I2CBUFFERSIZE);
-				printf("i2cget -y 2 0x48 0x%x\n", 0x26 - n);
-				snprintf(i2ccommand, I2CBUFFERSIZE, "i2cget -y 2 0x48 0x%x", 0x26 - n);
-				mem[x] = rungetcommand(i2ccommand);
-			}
-			break;
 #endif
 
 			case FUNCBEG:
@@ -653,27 +524,26 @@ void *interpreter(void *pcPnt)
 			case PRINT:
 			{
 				int t;
-				sem_wait(sempr);
+				sem_wait(&sempr);
 				t = mem[pc++];
 				x -= szof(t);
 				auxprint(x + 1, t, 0, '\n');
 				fflush(stdout);
-				sem_post(sempr);
+				sem_post(&sempr);
 			}
-				break;
+			break;
 
 			case PRINTID:
 			{
-				sem_wait(sempr);
-				i = mem[pc++];				// ссылка на identtab
+				sem_wait(&sempr);
+				i = mem[pc++]; // ссылка на identtab
 				prtype = identab[i + 2];
-				r = identab[i + 1] + 2;		// ссылка на reprtab
+				r = identab[i + 1] + 2; // ссылка на reprtab
 
 				do
 				{
 					printf_char(reprtab[r++]);
-				}
-				while (reprtab[r] != 0);
+				} while (reprtab[r] != 0);
 
 				if (prtype > 0 && modetab[prtype] == MARRAY && modetab[prtype + 1] > 0)
 				{
@@ -685,9 +555,9 @@ void *interpreter(void *pcPnt)
 				}
 
 				fflush(stdout);
-				sem_post(sempr);
+				sem_post(&sempr);
 			}
-				break;
+			break;
 
 			/*
 			 *	Ожидает указатель на форматную строку на верхушке стека
@@ -700,35 +570,34 @@ void *interpreter(void *pcPnt)
 			{
 				int sumsize, strbeg;
 
-				sem_wait(sempr);
+				sem_wait(&sempr);
 				sumsize = mem[pc++];
 				strbeg = mem[x--];
 
 				auxprintf(strbeg, x -= sumsize);
 				fflush(stdout);
-				sem_post(sempr);
+				sem_post(&sempr);
 			}
-				break;
+			break;
 
 			case GETID:
 			{
-				sem_wait(sempr);
-				i = mem[pc++];				// ссылка на identtab
+				sem_wait(&sempr);
+				i = mem[pc++]; // ссылка на identtab
 				prtype = identab[i + 2];
-				r = identab[i + 1] + 2;		// ссылка на reprtab
+				r = identab[i + 1] + 2; // ссылка на reprtab
 
 				do
 				{
 					printf_char(reprtab[r++]);
-				}
-				while (reprtab[r] != 0);
+				} while (reprtab[r] != 0);
 				printf(" ");
 				fflush(stdout);
 
 				auxget(dsp(identab[i + 3], l), prtype);
-				sem_post(sempr);
+				sem_post(&sempr);
 			}
-				break;
+			break;
 
 			case ABSIC:
 				mem[x] = abs(mem[x]);
@@ -738,7 +607,7 @@ void *interpreter(void *pcPnt)
 				rf = fabs(rf);
 				memcpy(&mem[x - 1], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case SQRTC:
 			{
 				if (rf < 0)
@@ -748,25 +617,25 @@ void *interpreter(void *pcPnt)
 				rf = sqrt(rf);
 				memcpy(&mem[x - 1], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case EXPC:
 			{
 				rf = exp(rf);
 				memcpy(&mem[x - 1], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case SINC:
 			{
 				rf = sin(rf);
 				memcpy(&mem[x - 1], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case COSC:
 			{
 				rf = cos(rf);
 				memcpy(&mem[x - 1], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case LOGC:
 			{
 				if (rf <= 0)
@@ -776,7 +645,7 @@ void *interpreter(void *pcPnt)
 				rf = log(rf);
 				memcpy(&mem[x - 1], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case LOG10C:
 			{
 				if (rf <= 0)
@@ -786,7 +655,7 @@ void *interpreter(void *pcPnt)
 				rf = log10(rf);
 				memcpy(&mem[x - 1], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case ASINC:
 			{
 				if (rf < -1 || rf > 1)
@@ -796,14 +665,14 @@ void *interpreter(void *pcPnt)
 				rf = asin(rf);
 				memcpy(&mem[x - 1], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case RANDC:
 			{
-				rf = (double) rand() / RAND_MAX;
+				rf = (double)rand() / RAND_MAX;
 				memcpy(&mem[++x], &rf, sizeof(double));
 				++x;
 			}
-				break;
+			break;
 			case ROUNDC:
 				mem[--x] = rf < 0 ? (int)(rf - 0.5) : (int)(rf + 0.5);
 				break;
@@ -814,7 +683,7 @@ void *interpreter(void *pcPnt)
 				a_str1 = mem[x--];
 				mem[a_str1] = str2;
 			}
-				break;
+			break;
 			case STRNCPYC:
 			{
 				num = mem[x--];
@@ -823,7 +692,7 @@ void *interpreter(void *pcPnt)
 
 				if (num > mem[str2 - 1])
 				{
-					exit(2);	// erorr
+					exit(2); // error
 				}
 
 				if (num <= mem[mem[a_str1] - 1])
@@ -832,7 +701,9 @@ void *interpreter(void *pcPnt)
 					mem[a_str1 - 1] = num;
 					num += a_str1;
 					while (a_str1 < num)
+					{
 						mem[a_str1++] = mem[str2++];
+					}
 				}
 				mem[x++] = num;
 				mem[a_str1] = x;
@@ -844,7 +715,7 @@ void *interpreter(void *pcPnt)
 				}
 				x--;
 			}
-				break;
+			break;
 			case STRCATC:
 			{
 				str2 = mem[x--];
@@ -868,7 +739,7 @@ void *interpreter(void *pcPnt)
 				}
 				x--;
 			}
-				break;
+			break;
 			case STRNCATC:
 			{
 				num = mem[x--];
@@ -893,7 +764,7 @@ void *interpreter(void *pcPnt)
 				}
 				x--;
 			}
-				break;
+			break;
 			case STRCMPC:
 			{
 				str2 = mem[x--];
@@ -931,7 +802,7 @@ void *interpreter(void *pcPnt)
 					}
 				}
 			}
-				break;
+			break;
 			case STRNCMPC:
 			{
 				num = mem[x--];
@@ -977,7 +848,7 @@ void *interpreter(void *pcPnt)
 					}
 				}
 			}
-				break;
+			break;
 			case STRSTRC:
 			{
 				int j, flag = 0;
@@ -1012,13 +883,13 @@ void *interpreter(void *pcPnt)
 					break;
 				}
 			}
-				break;
+			break;
 			case STRLENC:
 			{
 				a_str1 = mem[x];
 				mem[x] = mem[a_str1 - 1];
 			}
-				break;
+			break;
 			case STRUCTWITHARR:
 			{
 				int oldpc, oldbase = base, procnum;
@@ -1035,8 +906,8 @@ void *interpreter(void *pcPnt)
 				base = oldbase;
 				flagstop = 1;
 			}
-				break;
-			case DEFARR:	// N, d, displ, proc	на стеке N1, N2, ... , NN
+			break;
+			case DEFARR: // N, d, displ, proc	на стеке N1, N2, ... , NN
 			{
 				int N = mem[pc++];
 				int d = mem[pc++];
@@ -1052,7 +923,7 @@ void *interpreter(void *pcPnt)
 					usual -= 2;
 				}
 
-				NN = mem[x];	// будет использоваться в ARRINIT только при usual=1
+				NN = mem[x]; // будет использоваться в ARRINIT только при usual=1
 				for (i = usual && all ? N + 1 : N; i > 0; i--)
 				{
 					if ((bounds[i] = mem[x--]) <= 0)
@@ -1106,9 +977,9 @@ void *interpreter(void *pcPnt)
 						}
 					}
 				}
-				adinit = x + 1;	// при usual == 1 использоваться не будет
+				adinit = x + 1; // при usual == 1 использоваться не будет
 			}
-				break;
+			break;
 			case BEGINIT:
 				mem[++x] = mem[pc++];
 				break;
@@ -1123,7 +994,7 @@ void *interpreter(void *pcPnt)
 				r = mem[di < 0 ? g - di : l + di];
 				N = mem[r - 1];
 				from = mem[x--];
-				d = mem[from - 1];	// d - кол-во литер в строке-инициаторе
+				d = mem[from - 1]; // d - кол-во литер в строке-инициаторе
 
 				if (N != d)
 				{
@@ -1134,11 +1005,11 @@ void *interpreter(void *pcPnt)
 					mem[r + i] = mem[from + i];
 				}
 			}
-				break;
+			break;
 			case ARRINIT:
 			{
-				N = mem[pc++];	// N - размерность
-				d = mem[pc++];	// d - шаг
+				N = mem[pc++]; // N - размерность
+				d = mem[pc++]; // d - шаг
 
 				int addr = dsp(mem[pc++], l);
 				int usual = mem[pc++];
@@ -1155,7 +1026,7 @@ void *interpreter(void *pcPnt)
 					{
 						mem[addr] = adinit + 1;
 
-						if (usual && mem[adinit] != NN)	// здесь usual == 1,
+						if (usual && mem[adinit] != NN) // здесь usual == 1,
 						{								// если usual == 0, проверка не нужна
 							runtimeerr(init_err, mem[adinit], NN);
 						}
@@ -1164,7 +1035,7 @@ void *interpreter(void *pcPnt)
 				}
 				else
 				{
-					stA[1] = mem[addr];	// массив самого верхнего уровня
+					stA[1] = mem[addr]; // массив самого верхнего уровня
 					stN[1] = mem[stA[1] - 1];
 					sti[1] = 0;
 
@@ -1219,7 +1090,7 @@ void *interpreter(void *pcPnt)
 				}
 				x = adinit - 1;
 			}
-				break;
+			break;
 
 			case LI:
 				mem[++x] = mem[pc++];
@@ -1230,7 +1101,7 @@ void *interpreter(void *pcPnt)
 				++x;
 				++pc;
 			}
-				break;
+			break;
 			case LOAD:
 				mem[++x] = mem[dsp(mem[pc++], l)];
 				break;
@@ -1239,7 +1110,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[++x], &mem[dsp(mem[pc++], l)], sizeof(double));
 				++x;
 			}
-				break;
+			break;
 			case LAT:
 				mem[x] = mem[mem[x]];
 				break;
@@ -1248,7 +1119,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&rf, &mem[mem[x]], sizeof(double));
 				memcpy(&mem[x++], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case LA:
 				mem[++x] = dsp(mem[pc++], l);
 				break;
@@ -1256,10 +1127,10 @@ void *interpreter(void *pcPnt)
 			{
 				mem[l + 1] = ++x;
 				mem[x++] = l;
-				mem[x++] = 0;	// следующая статика
-				mem[x] = 0;		// pc в момент вызова
+				mem[x++] = 0; // следующая статика
+				mem[x] = 0;	  // pc в момент вызова
 			}
-				break;
+			break;
 			case CALL2:
 			{
 				i = mem[pc++];
@@ -1275,13 +1146,13 @@ void *interpreter(void *pcPnt)
 				mem[l + 2] = pc;
 				pc = entry + 3;
 			}
-				break;
+			break;
 			case RETURNVAL:
 			{
 				d = mem[pc++];
 				pc = mem[l + 2];
 
-				if (pc == -1)	// конец нити
+				if (pc == -1) // конец нити
 				{
 					flagstop = 0;
 				}
@@ -1299,12 +1170,12 @@ void *interpreter(void *pcPnt)
 					}
 				}
 			}
-				break;
+			break;
 			case RETURNVOID:
 			{
 				pc = mem[l + 2];
 
-				if (pc == -1)	// конец нити
+				if (pc == -1) // конец нити
 				{
 					flagstop = 0;
 				}
@@ -1315,7 +1186,7 @@ void *interpreter(void *pcPnt)
 					mem[l + 1] = 0;
 				}
 			}
-				break;
+			break;
 			case NOP:
 				break;
 			case B:
@@ -1333,15 +1204,15 @@ void *interpreter(void *pcPnt)
 				from = mem[x--];
 				N = mem[x];
 
-				for (i=0; i < N; i++)
+				for (i = 0; i < N; i++)
 				{
 					from = mem[from];
 				}
-				mem[x] = mem[from-1];
+				mem[x] = mem[from - 1];
 			}
-				break;
+			break;
 			case SELECT:
-				mem[x] += mem[pc++];	// ident displ
+				mem[x] += mem[pc++]; // ident displ
 				break;
 			case COPY00:
 			{
@@ -1354,7 +1225,7 @@ void *interpreter(void *pcPnt)
 					mem[di + i] = mem[di1 + i];
 				}
 			}
-				break;
+			break;
 			case COPY01:
 			{
 				di = dsp(mem[pc++], l);
@@ -1366,7 +1237,7 @@ void *interpreter(void *pcPnt)
 					mem[di + i] = mem[di1 + i];
 				}
 			}
-				break;
+			break;
 			case COPY10:
 			{
 				di = mem[x--];
@@ -1378,7 +1249,7 @@ void *interpreter(void *pcPnt)
 					mem[di + i] = mem[di1 + i];
 				}
 			}
-				break;
+			break;
 			case COPY11:
 			{
 				di1 = mem[x--];
@@ -1390,7 +1261,7 @@ void *interpreter(void *pcPnt)
 					mem[di + i] = mem[di1 + i];
 				}
 			}
-				break;
+			break;
 			case COPY0ST:
 			{
 				di = dsp(mem[pc++], l);
@@ -1401,7 +1272,7 @@ void *interpreter(void *pcPnt)
 					mem[++x] = mem[di + i];
 				}
 			}
-				break;
+			break;
 			case COPY1ST:
 			{
 				di = mem[x--];
@@ -1412,7 +1283,7 @@ void *interpreter(void *pcPnt)
 					mem[++x] = mem[di + i];
 				}
 			}
-				break;
+			break;
 			case COPY0STASS:
 			{
 				di = dsp(mem[pc++], l);
@@ -1424,7 +1295,7 @@ void *interpreter(void *pcPnt)
 					mem[di + i] = mem[x + i + 1];
 				}
 			}
-				break;
+			break;
 			case COPY1STASS:
 			{
 				len = mem[pc++];
@@ -1436,12 +1307,12 @@ void *interpreter(void *pcPnt)
 					mem[di + i] = mem[x + i + 2];
 				}
 			}
-				break;
+			break;
 			case COPYST:
 			{
 				di = mem[pc++];		// смещ поля
 				len = mem[pc++];	// длина поля
-				x -= mem[pc++] + 1;	// длина всей структуры
+				x -= mem[pc++] + 1; // длина всей структуры
 
 				for (i = 0; i < len; i++)
 				{
@@ -1449,13 +1320,13 @@ void *interpreter(void *pcPnt)
 				}
 				x += len - 1;
 			}
-				break;
+			break;
 
 			case SLICE:
 			{
 				d = mem[pc++];
-				i = mem[x--];	// index
-				r = mem[x];		// array
+				i = mem[x--]; // index
+				r = mem[x];	  // array
 
 				if (i < 0 || i >= mem[r - 1])
 				{
@@ -1463,38 +1334,38 @@ void *interpreter(void *pcPnt)
 				}
 				mem[x] = r + i * d;
 			}
-				break;
+			break;
 			case WIDEN:
 			{
-				rf = (double) mem[x];
+				rf = (double)mem[x];
 				memcpy(&mem[x++], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case WIDEN1:
 			{
 				mem[x + 1] = mem[x];
 				mem[x] = mem[x - 1];
-				rf = (double) mem[x - 2];
+				rf = (double)mem[x - 2];
 				memcpy(&mem[x - 2], &rf, sizeof(double));
 				++x;
 			}
-				break;
+			break;
 			case _DOUBLE:
 			{
 				r = mem[x];
 				mem[++x] = r;
 			}
-				break;
-				
-			case 9482:              // ROWING
-				mem[g+3] = mem[x];
-				mem[x] = g+3;
+			break;
+
+			case 9482: // ROWING
+				mem[g + 3] = mem[x];
+				mem[x] = g + 3;
 				break;
 
-			case 9483:              // ROWINGD
-				mem[g+5] = mem[x-1];
-				mem[g+6] = mem[x];
-				mem[--x] = g+5;
+			case 9483: // ROWINGD
+				mem[g + 5] = mem[x - 1];
+				mem[g + 6] = mem[x];
+				mem[--x] = g + 5;
 				break;
 
 			case ASS:
@@ -1505,61 +1376,61 @@ void *interpreter(void *pcPnt)
 				r = mem[dsp(mem[pc++], l)] %= check_zero_int(mem[x]);
 				mem[x] = r;
 			}
-				break;
+			break;
 			case SHLASS:
 			{
 				r = mem[dsp(mem[pc++], l)] <<= mem[x];
 				mem[x] = r;
 			}
-				break;
+			break;
 			case SHRASS:
 			{
 				r = mem[dsp(mem[pc++], l)] >>= mem[x];
 				mem[x] = r;
 			}
-				break;
+			break;
 			case ANDASS:
 			{
 				r = mem[dsp(mem[pc++], l)] &= mem[x];
 				mem[x] = r;
 			}
-				break;
+			break;
 			case EXORASS:
 			{
 				r = mem[dsp(mem[pc++], l)] ^= mem[x];
 				mem[x] = r;
 			}
-				break;
+			break;
 			case ORASS:
 			{
 				r = mem[dsp(mem[pc++], l)] |= mem[x];
 				mem[x] = r;
 			}
-				break;
+			break;
 			case PLUSASS:
 			{
 				r = mem[dsp(mem[pc++], l)] += mem[x];
 				mem[x] = r;
 			}
-				break;
+			break;
 			case MINUSASS:
 			{
 				r = mem[dsp(mem[pc++], l)] -= mem[x];
 				mem[x] = r;
 			}
-				break;
+			break;
 			case MULTASS:
 			{
 				r = mem[dsp(mem[pc++], l)] *= mem[x];
 				mem[x] = r;
 			}
-				break;
+			break;
 			case DIVASS:
 			{
 				r = mem[dsp(mem[pc++], l)] /= check_zero_int(mem[x]);
 				mem[x] = r;
 			}
-				break;
+			break;
 
 			case ASSV:
 				mem[dsp(mem[pc++], l)] = mem[x--];
@@ -1600,255 +1471,255 @@ void *interpreter(void *pcPnt)
 				r = mem[mem[x - 1]] = mem[x];
 				mem[--x] = r;
 			}
-				break;
+			break;
 			case REMASSAT:
 			{
 				r = mem[mem[x - 1]] %= check_zero_int(mem[x]);
 				mem[--x] = r;
 			}
-				break;
+			break;
 			case SHLASSAT:
 			{
 				r = mem[mem[x - 1]] <<= mem[x];
 				mem[--x] = r;
 			}
-				break;
+			break;
 			case SHRASSAT:
 			{
 				r = mem[mem[x - 1]] >>= mem[x];
 				mem[--x] = r;
 			}
-				break;
+			break;
 			case ANDASSAT:
 			{
 				r = mem[mem[x - 1]] &= mem[x];
 				mem[--x] = r;
 			}
-				break;
+			break;
 			case EXORASSAT:
 			{
 				r = mem[mem[x - 1]] ^= mem[x];
 				mem[--x] = r;
 			}
-				break;
+			break;
 			case ORASSAT:
 			{
 				r = mem[mem[x - 1]] |= mem[x];
 				mem[--x] = r;
 			}
-				break;
+			break;
 			case PLUSASSAT:
 			{
 				r = mem[mem[x - 1]] += mem[x];
 				mem[--x] = r;
 			}
-				break;
+			break;
 			case MINUSASSAT:
 			{
 				r = mem[mem[x - 1]] -= mem[x];
 				mem[--x] = r;
 			}
-				break;
+			break;
 			case MULTASSAT:
 			{
 				r = mem[mem[x - 1]] *= mem[x];
 				mem[--x] = r;
 			}
-				break;
+			break;
 			case DIVASSAT:
 			{
 				r = mem[mem[x - 1]] /= check_zero_int(mem[x]);
 				mem[--x] = r;
 			}
-				break;
+			break;
 
 			case ASSATV:
 			{
 				mem[mem[x - 1]] = mem[x];
 				x -= 2;
 			}
-				break;
+			break;
 			case REMASSATV:
 			{
 				mem[mem[x - 1]] %= check_zero_int(mem[x]);
 				x -= 2;
 			}
-				break;
+			break;
 			case SHLASSATV:
 			{
 				mem[mem[x - 1]] <<= mem[x];
 				x -= 2;
 			}
-				break;
+			break;
 			case SHRASSATV:
 			{
 				mem[mem[x - 1]] >>= mem[x];
 				x -= 2;
 			}
-				break;
+			break;
 			case ANDASSATV:
 			{
 				mem[mem[x - 1]] &= mem[x];
 				x -= 2;
 			}
-				break;
+			break;
 			case EXORASSATV:
 			{
 				mem[mem[x - 1]] ^= mem[x];
 				x -= 2;
 			}
-				break;
+			break;
 			case ORASSATV:
 			{
 				mem[mem[x - 1]] |= mem[x];
 				x -= 2;
 			}
-				break;
+			break;
 			case PLUSASSATV:
 			{
 				mem[mem[x - 1]] += mem[x];
 				x -= 2;
 			}
-				break;
+			break;
 			case MINUSASSATV:
 			{
 				mem[mem[x - 1]] -= mem[x];
 				x -= 2;
 			}
-				break;
+			break;
 			case MULTASSATV:
 			{
 				mem[mem[x - 1]] *= mem[x];
 				x -= 2;
 			}
-				break;
+			break;
 			case DIVASSATV:
 			{
 				mem[mem[x - 1]] /= check_zero_int(mem[x]);
 				x -= 2;
 			}
-				break;
+			break;
 
 			case LOGOR:
 			{
 				mem[x - 1] = mem[x - 1] || mem[x];
 				x--;
 			}
-				break;
+			break;
 			case LOGAND:
 			{
 				mem[x - 1] = mem[x - 1] && mem[x];
 				x--;
 			}
-				break;
+			break;
 			case LOR:
 			{
 				mem[x - 1] |= mem[x];
 				x--;
 			}
-				break;
+			break;
 			case LEXOR:
 			{
 				mem[x - 1] ^= mem[x];
 				x--;
 			}
-				break;
+			break;
 			case LAND:
 			{
 				mem[x - 1] &= mem[x];
 				x--;
 			}
-				break;
+			break;
 			case LSHR:
 			{
 				mem[x - 1] >>= mem[x];
 				x--;
 			}
-				break;
+			break;
 			case LSHL:
 			{
 				mem[x - 1] <<= mem[x];
 				x--;
 			}
-				break;
+			break;
 			case LREM:
 			{
 				mem[x - 1] %= mem[x];
 				x--;
 			}
-				break;
+			break;
 			case EQEQ:
 			{
 				mem[x - 1] = mem[x - 1] == mem[x];
 				x--;
 			}
-				break;
+			break;
 			case NOTEQ:
 			{
 				mem[x - 1] = mem[x - 1] != mem[x];
 				x--;
 			}
-				break;
+			break;
 			case LLT:
 			{
 				mem[x - 1] = mem[x - 1] < mem[x];
 				x--;
 			}
-				break;
+			break;
 			case LGT:
 			{
 				mem[x - 1] = mem[x - 1] > mem[x];
 				x--;
 			}
-				break;
+			break;
 			case LLE:
 			{
 				mem[x - 1] = mem[x - 1] <= mem[x];
 				x--;
 			}
-				break;
+			break;
 			case LGE:
 			{
 				mem[x - 1] = mem[x - 1] >= mem[x];
 				x--;
 			}
-				break;
+			break;
 			case LPLUS:
 			{
 				mem[x - 1] += mem[x];
 				x--;
 			}
-				break;
+			break;
 			case LMINUS:
 			{
 				mem[x - 1] -= mem[x];
 				x--;
 			}
-				break;
+			break;
 			case LMULT:
 			{
 				mem[x - 1] *= mem[x];
 				x--;
 			}
-				break;
+			break;
 			case LDIV:
 			{
 				mem[x - 1] /= check_zero_int(mem[x]);
 				x--;
 			}
-				break;
+			break;
 			case POSTINC:
 			{
 				mem[++x] = mem[r = dsp(mem[pc++], l)];
 				mem[r]++;
 			}
-				break;
+			break;
 			case POSTDEC:
 			{
 				mem[++x] = mem[r = dsp(mem[pc++], l)];
 				mem[r]--;
 			}
-				break;
+			break;
 			case INC:
 				mem[++x] = ++mem[dsp(mem[pc++], l)];
 				break;
@@ -1860,13 +1731,13 @@ void *interpreter(void *pcPnt)
 				mem[x] = mem[r = mem[x]];
 				mem[r]++;
 			}
-				break;
+			break;
 			case POSTDECAT:
 			{
 				mem[x] = mem[r = mem[x]];
 				mem[r]--;
 			}
-				break;
+			break;
 			case INCAT:
 				mem[x] = ++mem[mem[x]];
 				break;
@@ -1899,7 +1770,7 @@ void *interpreter(void *pcPnt)
 				mem[r = dsp(mem[pc++], l)] = mem[x - 1];
 				mem[r + 1] = mem[x];
 			}
-				break;
+			break;
 			case PLUSASSR:
 			{
 				memcpy(&lf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
@@ -1907,7 +1778,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[x - 1], &lf, sizeof(double));
 				memcpy(&mem[i], &lf, sizeof(double));
 			}
-				break;
+			break;
 			case MINUSASSR:
 			{
 				memcpy(&lf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
@@ -1915,7 +1786,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[x - 1], &lf, sizeof(double));
 				memcpy(&mem[i], &lf, sizeof(double));
 			}
-				break;
+			break;
 			case MULTASSR:
 			{
 				memcpy(&lf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
@@ -1923,7 +1794,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[x - 1], &lf, sizeof(double));
 				memcpy(&mem[i], &lf, sizeof(double));
 			}
-				break;
+			break;
 			case DIVASSR:
 			{
 				memcpy(&lf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
@@ -1931,7 +1802,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[x - 1], &lf, sizeof(double));
 				memcpy(&mem[i], &lf, sizeof(double));
 			}
-				break;
+			break;
 
 			case ASSATR:
 			{
@@ -1940,7 +1811,7 @@ void *interpreter(void *pcPnt)
 				mem[r + 1] = mem[x - 1] = mem[x];
 				x--;
 			}
-				break;
+			break;
 			case PLUSASSATR:
 			{
 				memcpy(&lf, &mem[i = mem[x -= 2]], sizeof(double));
@@ -1948,7 +1819,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[x++], &lf, sizeof(double));
 				memcpy(&mem[i], &lf, sizeof(double));
 			}
-				break;
+			break;
 			case MINUSASSATR:
 			{
 				memcpy(&lf, &mem[i = mem[x -= 2]], sizeof(double));
@@ -1956,7 +1827,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[x++], &lf, sizeof(double));
 				memcpy(&mem[i], &lf, sizeof(double));
 			}
-				break;
+			break;
 			case MULTASSATR:
 			{
 				memcpy(&lf, &mem[i = mem[x -= 2]], sizeof(double));
@@ -1964,7 +1835,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[x++], &lf, sizeof(double));
 				memcpy(&mem[i], &lf, sizeof(double));
 			}
-				break;
+			break;
 			case DIVASSATR:
 			{
 				memcpy(&lf, &mem[i = mem[x -= 2]], sizeof(double));
@@ -1972,7 +1843,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[x++], &lf, sizeof(double));
 				memcpy(&mem[i], &lf, sizeof(double));
 			}
-				break;
+			break;
 
 			case ASSRV:
 			{
@@ -1981,7 +1852,7 @@ void *interpreter(void *pcPnt)
 				mem[r] = mem[x--];
 				memcpy(&lf, &mem[r], sizeof(double));
 			}
-				break;
+			break;
 			case PLUSASSRV:
 			{
 				memcpy(&lf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
@@ -1989,7 +1860,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &lf, sizeof(double));
 				x -= 2;
 			}
-				break;
+			break;
 			case MINUSASSRV:
 			{
 				memcpy(&lf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
@@ -1997,7 +1868,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &lf, sizeof(double));
 				x -= 2;
 			}
-				break;
+			break;
 			case MULTASSRV:
 			{
 				memcpy(&lf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
@@ -2005,7 +1876,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &lf, sizeof(double));
 				x -= 2;
 			}
-				break;
+			break;
 			case DIVASSRV:
 			{
 				memcpy(&lf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
@@ -2013,7 +1884,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &lf, sizeof(double));
 				x -= 2;
 			}
-				break;
+			break;
 
 			case ASSATRV:
 			{
@@ -2021,7 +1892,7 @@ void *interpreter(void *pcPnt)
 				mem[r + 1] = mem[x--];
 				mem[r] = mem[x--];
 			}
-				break;
+			break;
 			case PLUSASSATRV:
 			{
 				memcpy(&lf, &mem[i = mem[x -= 2]], sizeof(double));
@@ -2029,7 +1900,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &lf, sizeof(double));
 				--x;
 			}
-				break;
+			break;
 			case MINUSASSATRV:
 			{
 				memcpy(&lf, &mem[i = mem[x -= 2]], sizeof(double));
@@ -2037,7 +1908,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &lf, sizeof(double));
 				--x;
 			}
-				break;
+			break;
 			case MULTASSATRV:
 			{
 				memcpy(&lf, &mem[i = mem[x -= 2]], sizeof(double));
@@ -2045,7 +1916,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &lf, sizeof(double));
 				--x;
 			}
-				break;
+			break;
 			case DIVASSATRV:
 			{
 				memcpy(&lf, &mem[i = mem[x -= 2]], sizeof(double));
@@ -2053,72 +1924,72 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &lf, sizeof(double));
 				--x;
 			}
-				break;
+			break;
 
 			case EQEQR:
 			{
 				memcpy(&lf, &mem[x -= 3], sizeof(double));
 				mem[x] = lf == rf;
 			}
-				break;
+			break;
 			case NOTEQR:
 			{
 				memcpy(&lf, &mem[x -= 3], sizeof(double));
 				mem[x] = lf != rf;
 			}
-				break;
+			break;
 			case LLTR:
 			{
 				memcpy(&lf, &mem[x -= 3], sizeof(double));
 				mem[x] = lf < rf;
 			}
-				break;
+			break;
 			case LGTR:
 			{
 				memcpy(&lf, &mem[x -= 3], sizeof(double));
 				mem[x] = lf > rf;
 			}
-				break;
+			break;
 			case LLER:
 			{
 				memcpy(&lf, &mem[x -= 3], sizeof(double));
 				mem[x] = lf <= rf;
 			}
-				break;
+			break;
 			case LGER:
 			{
 				memcpy(&lf, &mem[x -= 3], sizeof(double));
 				mem[x] = lf >= rf;
 			}
-				break;
+			break;
 			case LPLUSR:
 			{
 				memcpy(&lf, &mem[x -= 3], sizeof(double));
 				lf += rf;
 				memcpy(&mem[x++], &lf, sizeof(double));
 			}
-				break;
+			break;
 			case LMINUSR:
 			{
 				memcpy(&lf, &mem[x -= 3], sizeof(double));
 				lf -= rf;
 				memcpy(&mem[x++], &lf, sizeof(double));
 			}
-				break;
+			break;
 			case LMULTR:
 			{
 				memcpy(&lf, &mem[x -= 3], sizeof(double));
 				lf *= rf;
 				memcpy(&mem[x++], &lf, sizeof(double));
 			}
-				break;
+			break;
 			case LDIVR:
 			{
 				memcpy(&lf, &mem[x -= 3], sizeof(double));
 				lf /= check_zero_float(rf);
 				memcpy(&mem[x++], &lf, sizeof(double));
 			}
-				break;
+			break;
 			case POSTINCR:
 			{
 				memcpy(&rf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
@@ -2127,7 +1998,7 @@ void *interpreter(void *pcPnt)
 				++rf;
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case POSTDECR:
 			{
 				memcpy(&rf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
@@ -2136,7 +2007,7 @@ void *interpreter(void *pcPnt)
 				--rf;
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case INCR:
 			{
 				memcpy(&rf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
@@ -2145,7 +2016,7 @@ void *interpreter(void *pcPnt)
 				x += 2;
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case DECR:
 			{
 				memcpy(&rf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
@@ -2154,7 +2025,7 @@ void *interpreter(void *pcPnt)
 				x += 2;
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case POSTINCATR:
 			{
 				memcpy(&rf, &mem[i = mem[x]], sizeof(double));
@@ -2163,7 +2034,7 @@ void *interpreter(void *pcPnt)
 				++rf;
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case POSTDECATR:
 			{
 				memcpy(&rf, &mem[i = mem[x]], sizeof(double));
@@ -2172,7 +2043,7 @@ void *interpreter(void *pcPnt)
 				--rf;
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case INCATR:
 			{
 				memcpy(&rf, &mem[i = mem[x]], sizeof(double));
@@ -2181,7 +2052,7 @@ void *interpreter(void *pcPnt)
 				x += 2;
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case DECATR:
 			{
 				memcpy(&rf, &mem[i = mem[x]], sizeof(double));
@@ -2190,7 +2061,7 @@ void *interpreter(void *pcPnt)
 				x += 2;
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case INCRV:
 			case POSTINCRV:
 			{
@@ -2198,7 +2069,7 @@ void *interpreter(void *pcPnt)
 				++rf;
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case DECRV:
 			case POSTDECRV:
 			{
@@ -2206,7 +2077,7 @@ void *interpreter(void *pcPnt)
 				--rf;
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case INCATRV:
 			case POSTINCATRV:
 			{
@@ -2214,7 +2085,7 @@ void *interpreter(void *pcPnt)
 				++rf;
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case DECATRV:
 			case POSTDECATRV:
 			{
@@ -2222,14 +2093,14 @@ void *interpreter(void *pcPnt)
 				--rf;
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
-				break;
+			break;
 
 			case UNMINUSR:
 			{
 				rf = -rf;
 				memcpy(&mem[x - 1], &rf, sizeof(double));
 			}
-				break;
+			break;
 			case LNOT:
 				mem[x] = ~mem[x];
 				break;
@@ -2245,31 +2116,24 @@ void *interpreter(void *pcPnt)
 	return NULL;
 }
 
-#ifdef _MSC_VER
-__declspec(dllexport) void import(const char *export)
-#else
-void import(const char *export)
-#endif
+INTERPRETER_EXPORTED void import(const char *path)
 {
+	char firstline[100];
 	int i;
 	int pc;
 
-#ifdef ROBOT
-	f1 = fopen(JD1, "r");						// файлы цифровых датчиков
-	f2 = fopen(JD2, "r");
-	printf("stage 1\n");
-	system("i2cset -y 2 0x48 0x10 0x1000 w");	// инициализация силовых моторов
-	system("i2cset -y 2 0x48 0x11 0x1000 w");
-	system("i2cset -y 2 0x48 0x12 0x1000 w");
-	system("i2cset -y 2 0x48 0x13 0x1000 w");
-#endif
-
-	input = fopen(export, "r");
+	input = fopen(path, "r");
 
 	if (!input)
 	{
-		printf(" %s not found\n", export);
+		printf(" %s not found\n", path);
 		return;
+	}
+
+	/* Check shebang, get back to start if there are none */
+	if (fgets(firstline, sizeof(firstline), input) != firstline || strncmp(firstline, "#!", 2) != 0)
+	{
+		fseek(input, 0, SEEK_SET);
 	}
 
 	fscanf(input, "%i %i %i %i %i %i %i\n", &pc, &funcnum, &id, &rp, &md, &maxdisplg, &wasmain);
@@ -2278,7 +2142,8 @@ void import(const char *export)
 	{
 		fscanf(input, "%i ", &mem[i]);
 	}
-	for (i = 0; i < funcnum; i++){
+	for (i = 0; i < funcnum; i++)
+	{
 		fscanf(input, "%i ", &functions[i]);
 	}
 	for (i = 0; i < id; i++)
@@ -2297,50 +2162,17 @@ void import(const char *export)
 	fclose(input);
 
 	threads[0] = pc;
-	mem[pc] = g = pc + 2;			    // это l
+	mem[pc] = g = pc + 2; // это l
 	mem[g] = mem[g + 1] = 0;
-	mem[pc + 1] = g + maxdisplg + 5;	// это x
+	mem[pc + 1] = g + maxdisplg + 5; // это x
 	pc = 4;
 	
 	mem[g+2] = mem[g+4] = 1;      // для ROWING mem [g+3] for int, mem[g+5],mem[g+6] for double
 
-	sem_unlink(sem_print);
-	sempr = sem_open(sem_print, O_CREAT, S_IRUSR | S_IWUSR, 1);
+	mem[g + 2] = mem[g + 4] = 1; // для ROWING mem [g+3] for int, mem[g+5],mem[g+6] for double
+
+	sem_init(&sempr, 0, 1);
 	t_init();
-	interpreter(&pc);				// номер нити главной программы 0
+	interpreter(&pc); // номер нити главной программы 0
 	t_destroy();
-
-#ifdef ROBOT
-	system("i2cset -y 2 0x48 0x10 0 w");	// отключение силовых моторов
-	system("i2cset -y 2 0x48 0x11 0 w");
-	system("i2cset -y 2 0x48 0x12 0 w");
-	system("i2cset -y 2 0x48 0x13 0 w");
-	fclose(f1);
-	fclose(f2);
-#endif
 }
-
-#ifdef ROBOT
-int rungetcommand(const char *command)
-{
-	FILE *fp;
-	long x = -1;
-	char path[100] = { '\0' };
-
-	/* Open the command for reading. */
-	fp = popen(command, "r");
-	if (fp == NULL)
-	{
-		runtimeerr(wrong_robot_com, 0, 0);
-	}
-
-	/* Read the output a line at a time - output it. */
-	while (fgets(path, sizeof(path) - 1, fp) != NULL)
-	{
-		x = strtol(path, NULL, 16);
-		printf("[%s] %ld\n", path, x);
-	}
-	pclose(fp);
-	return x;	// ??????
-}
-#endif
