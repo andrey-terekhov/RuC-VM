@@ -997,6 +997,23 @@ void *interpreter(void *pcPnt)
 
 					if (N == 1)
 					{
+						if (proc)
+						{
+							int curx = x, oldbase = base, oldpc = pc, i;
+							for (i = stackC0[1]; i <= curx; i += d)
+							{
+								pc = -proc;	// вычисление границ очередного массива в структуре
+								base = i;
+								mem[threads[numTh] + 1] = x;
+
+								interpreter((void *)&pc);
+
+								flagstop = 1;
+								x = xx;
+							}
+							pc = oldpc;
+							base = oldbase;
+						}
 					}
 					else
 					{
@@ -1020,7 +1037,24 @@ void *interpreter(void *pcPnt)
 									stacki[curdim] = 0;
 								} while (curdim < N);
 								// построена очередная вертикаль подмассивов
+								
+								if (proc)
+								{
+									int curx = x, oldbase = base, oldpc = pc, i;
+									for (i = stackC0[curdim]; i <= curx; i += d)
+									{
+										pc = proc;	// вычисление границ очередного массива в структуре
+										base = i;
+										mem[threads[numTh] + 1] = x;
 
+										interpreter((void *)&pc);
+
+										flagstop = 1;
+										x = xx;
+									}
+									pc = oldpc;
+									base = oldbase;
+								}
 								// go right
 								--curdim;
 							}
@@ -2218,12 +2252,12 @@ INTERPRETER_EXPORTED void import(const char *path)
 	mem[pc + 1] = g + maxdisplg + 5; // это x
 	pc = 4;
 	
-	mem[g+2] = mem[g+4] = 1;      // для ROWING mem [g+3] for int, mem[g+5],mem[g+6] for double
+	mem[g+2] = mem[g+4] = 1;    // для ROWING mem [g+3] for int, mem[g+5],mem[g+6] for double
 
-	mem[g + 2] = mem[g + 4] = 1; // для ROWING mem [g+3] for int, mem[g+5],mem[g+6] for double
+	mem[g + 2] = mem[g + 4] = 1;// для ROWING mem [g+3] for int, mem[g+5],mem[g+6] for double
 
 	sem_init(&sempr, 0, 1);
 	t_init();
-	interpreter(&pc); // номер нити главной программы 0
+	interpreter(&pc);           // номер нити главной программы 0
 	t_destroy();
 }
