@@ -155,11 +155,11 @@ void prmem()
 
 void auxprintf(int strbeg, int databeg)
 {
-	int i;
+	int i, n = mem[strbeg-1];
 	int j;
 	int curdata = databeg + 1;
 
-	for (i = strbeg; mem[i] != 0; ++i)
+	for (i = strbeg; i < strbeg+n; ++i)
 	{
 		if (mem[i] == '%')
 		{
@@ -2259,5 +2259,6 @@ INTERPRETER_EXPORTED void import(const char *path)
 	sem_init(&sempr, 0, 1);
 	t_init();
 	interpreter(&pc);           // номер нити главной программы 0
+	printf("\n");
 	t_destroy();
 }
