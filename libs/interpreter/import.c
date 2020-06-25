@@ -454,18 +454,19 @@ void *interpreter(void *pcPnt)
 
 			case CREATEDIRECTC:
 			{
-				i = pc;
-				mem[++x] = t_create_inner(interpreter, (void *)&i);
+				int *arg = malloc(sizeof(*arg));
+				*arg = pc;
+				mem[++x] = t_create_inner(interpreter, (void *)arg);
 			}
 			break;
 
 			case CREATEC:
 			{
-				int i;
-				i = mem[x];
-				entry = functions[i > 0 ? i : mem[l - i]];
-				i = entry + 3; // новый pc
-				mem[x] = t_create_inner(interpreter, (void *)&i);
+				int *arg = malloc(sizeof(*arg));
+				*arg = mem[x];
+				entry = functions[*arg > 0 ? *arg : mem[l - *arg]];
+				*arg = entry + 3; // новый pc
+				mem[x] = t_create_inner(interpreter, (void *)arg);
 			}
 			break;
 
@@ -2204,6 +2205,11 @@ void *interpreter(void *pcPnt)
 			default:
 				runtimeerr(wrong_kop, mem[pc - 1], numTh);
 		}
+	}
+
+	if (numTh)
+	{
+		free((int *)pcPnt);
 	}
 
 	return NULL;
