@@ -430,6 +430,27 @@ void *interpreter(void *pcPnt)
 				xx = x;
 			}
 			break;
+				
+			case ASSERTC:
+			{
+				int message = mem[x--];
+				int cond = mem[x--];
+				
+				if (!cond)
+				{
+					printf("Test Faild\nMessage: ");
+					
+					for (int i = 0; i < mem[message - 1]; ++i)
+					{
+						printf("%c", (char)mem[message + i]);
+					}
+					
+					printf("\n");
+					fflush(stdout);
+					exit(-1);
+				}
+			}
+			break;
 
 			case CREATEDIRECTC:
 			{
