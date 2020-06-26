@@ -66,8 +66,13 @@ int mem[MAXMEMSIZE], functions[FUNCSIZE], funcnum;
 int threads[NUMOFTHREADS]; //, curthread, upcurthread;
 int procd, iniprocs[INIPROSIZE], base = 0, adinit, NN;
 FILE *input;
+
+#ifdef __APPLE__
 char sem_print[] = "sem_print", sem_debug[] = "sem_debug";
 sem_t *sempr, *semdeb;
+#else
+sem_t sempr, semdeb;
+#endif
 
 
 #ifdef ROBOT
@@ -585,18 +590,30 @@ void *interpreter(void *pcPnt)
 			case PRINT:
 			{
 				int t;
+#ifdef __APPLE__
 				sem_wait(sempr);
+#else
+				sem_wait(&sempr);
+#endif
 				t = mem[pc++];
 				x -= szof(t);
 				auxprint(x + 1, t, 0, '\n');
 				fflush(stdout);
+#ifdef __APPLE__
 				sem_post(sempr);
+#else
+				sem_post(&sempr);
+#endif
 			}
 			break;
 
 			case PRINTID:
 			{
+#ifdef __APPLE__
 				sem_wait(sempr);
+#else
+				sem_wait(&sempr);
+#endif
 				i = mem[pc++]; // ссылка на identtab
 				prtype = identab[i + 2];
 				r = identab[i + 1] + 2; // ссылка на reprtab
@@ -616,7 +633,11 @@ void *interpreter(void *pcPnt)
 				}
 
 				fflush(stdout);
+#ifdef __APPLE__
 				sem_post(sempr);
+#else
+				sem_post(&sempr);
+#endif
 			}
 			break;
 
@@ -631,19 +652,31 @@ void *interpreter(void *pcPnt)
 			{
 				int sumsize, strbeg;
 
+#ifdef __APPLE__
 				sem_wait(sempr);
+#else
+				sem_wait(&sempr);
+#endif
 				sumsize = mem[pc++];
 				strbeg = mem[x--];
 
 				auxprintf(strbeg, x -= sumsize);
 				fflush(stdout);
+#ifdef __APPLE__
 				sem_post(sempr);
+#else
+				sem_post(&sempr);
+#endif
 			}
 			break;
 
 			case GETID:
 			{
+#ifdef __APPLE__
 				sem_wait(sempr);
+#else
+				sem_wait(&sempr);
+#endif
 				i = mem[pc++]; // ссылка на identtab
 				prtype = identab[i + 2];
 				r = identab[i + 1] + 2; // ссылка на reprtab
@@ -656,7 +689,11 @@ void *interpreter(void *pcPnt)
 				fflush(stdout);
 
 				auxget(dsp(identab[i + 3], l), prtype);
+#ifdef __APPLE__
 				sem_post(sempr);
+#else
+				sem_post(&sempr);
+#endif
 			}
 			break;
 
@@ -2269,8 +2306,12 @@ INTERPRETER_EXPORTED void import(const char *path)
 
 	mem[g + 2] = mem[g + 4] = 1; // для ROWING mem [g+3] for int, mem[g+5],mem[g+6] for double
 
+#ifdef __APPLE__
 	sem_unlink(sem_print);
 	sempr = sem_open(sem_print, O_CREAT, S_IRUSR | S_IWUSR, 1);
+#else
+	sem_init(&sempr, 0, 1);
+#endif
 	t_init();
 	interpreter(&pc); // номер нити главной программы 0
 	printf("\n");

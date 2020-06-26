@@ -46,7 +46,12 @@ int __countTh = 1;
 struct __threadInfo __threads[__COUNT_TH];
 
 int __countSem = 0;
+#ifdef __APPLE__
 sem_t *__sems[__COUNT_SEM];
+#else
+sem_t __sems[__COUNT_SEM];
+#endif
+
 pthread_rwlock_t __lock_t_create;
 pthread_rwlock_t __lock_t_sem_create;
 
@@ -278,8 +283,12 @@ void t_sleep(int miliseconds)
 int t_sem_create(int level)
 {
 	int retVal;
+#ifdef __APPLE__
 	sem_t *sem;
 	char csem[10];
+#else
+	sem_t sem;
+#endif
 
 	int res = pthread_rwlock_wrlock(&__lock_t_sem_create);
 	if (res != 0)
@@ -288,10 +297,15 @@ int t_sem_create(int level)
 		exit(EXIT_FAILURE);
 	}
 
+#ifdef __APPLE__
 	sprintf(csem, "%d", __countSem);
 	sem_unlink(csem);
 	sem = sem_open(csem, O_CREAT, S_IRUSR | S_IWUSR, level);
 	if (sem == SEM_FAILED)
+#else
+	res = sem_init(&sem, 0, level);
+	if (res != 0)
+#endif
 	{
 		perror(" t_sem_create : Semaphore initilization failed");
 		exit(EXIT_FAILURE);
@@ -327,7 +341,11 @@ void t_sem_wait(int numSem)
 
 	if (numSem >= 0 && numSem < __countSem)
 	{
+#ifdef __APPLE__
 		sem_t *sem = __sems[numSem];
+#else
+		sem_t sem = __sems[numSem];
+#endif
 
 		res = pthread_rwlock_unlock(&__lock_t_sem_create);
 		if (res != 0)
@@ -336,7 +354,11 @@ void t_sem_wait(int numSem)
 			exit(EXIT_FAILURE);
 		}
 
+#ifdef __APPLE__
 		res = sem_wait(sem);
+#else
+		res = sem_wait(&sem);
+#endif
 		if (res != 0)
 		{
 			perror(" t_sem_wait : Semaphore wait failed");
@@ -361,7 +383,11 @@ void t_sem_post(int numSem)
 
 	if (numSem >= 0 && numSem < __countSem)
 	{
+#ifdef __APPLE__
 		sem_t *sem = __sems[numSem];
+#else
+		sem_t sem = __sems[numSem];
+#endif
 
 		res = pthread_rwlock_unlock(&__lock_t_sem_create);
 		if (res != 0)
@@ -370,7 +396,11 @@ void t_sem_post(int numSem)
 			exit(EXIT_FAILURE);
 		}
 
+#ifdef __APPLE__
 		res = sem_post(sem);
+#else
+		res = sem_post(&sem);
+#endif
 		if (res != 0)
 		{
 			perror(" t_sem_post : Semaphore post failed");
@@ -516,7 +546,11 @@ void t_destroy()
 
 	for (i = 0; i < __countSem; i++)
 	{
+#ifdef __APPLE__
 		res = sem_close(__sems[i]);
+#else
+		res = sem_destroy(&(__sems[i]));
+#endif
 		if (res != 0)
 		{
 			perror(" t_destroy : sem_destroy of __sems[i] failed");
