@@ -142,7 +142,11 @@ void runtimeerr(int e, int i, int r)
 			break;
 	}
 
+#ifdef TESTING_EXIT_CODE
+	exit(TESTING_EXIT_CODE);
+#else
 	exit(3);
+#endif
 }
 
 /*
@@ -453,7 +457,11 @@ void *interpreter(void *pcPnt)
 
 					printf("\n");
 					fflush(stdout);
-					exit(-1);
+#ifdef TESTING_EXIT_CODE
+					exit(TESTING_EXIT_CODE);
+#else
+					exit(1);
+#endif
 				}
 			}
 			break;
@@ -790,7 +798,11 @@ void *interpreter(void *pcPnt)
 
 				if (num > mem[str2 - 1])
 				{
+#ifdef TESTING_EXIT_CODE
+					exit(TESTING_EXIT_CODE);
+#else
 					exit(2); // error
+#endif
 				}
 
 				if (num <= mem[mem[a_str1] - 1])

@@ -29,6 +29,10 @@
 #define TRUE  1
 #define FALSE 0
 
+#ifdef TESTING_EXIT_CODE
+	#define EXIT_FAILURE TESTING_EXIT_CODE
+#endif
+
 
 struct __threadInfo
 {
