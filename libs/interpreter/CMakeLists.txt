@@ -15,3 +15,7 @@ else()
 	find_package(Threads REQUIRED)
 	target_link_libraries(${PROJECT_NAME} m ${CMAKE_THREAD_LIBS_INIT})
 endif()
+
+if(DEFINED TESTING_EXIT_CODE)
+	add_compile_definitions(TESTING_EXIT_CODE=${TESTING_EXIT_CODE})
+endif()

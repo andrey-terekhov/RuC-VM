@@ -9,6 +9,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 if(MSVC)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+else()
+	add_compile_options(-Wno-unused-result)
 endif()
 
 
