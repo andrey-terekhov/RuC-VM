@@ -24,13 +24,14 @@
 
 #define __COUNT_TH			10
 #define __COUNT_SEM			16
-#define __COUNT_MSGS_FOR_TH 4
+#define __COUNT_MSGS_FOR_TH	4
 
-#define TRUE  1
-#define FALSE 0
+#define TRUE	1
+#define FALSE	0
 
 #ifdef TESTING_EXIT_CODE
-	#define EXIT_FAILURE TESTING_EXIT_CODE
+	#undef	EXIT_FAILURE
+	#define	EXIT_FAILURE	TESTING_EXIT_CODE
 #endif
 
 
