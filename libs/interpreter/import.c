@@ -19,6 +19,7 @@
 #include "utils.h"
 #include <math.h>
 #include <semaphore.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -702,6 +703,62 @@ void *interpreter(void *pcPnt)
 #else
 				sem_post(&sempr);
 #endif
+			}
+			break;
+				
+			case 9596: // fopen
+			{
+				int array = mem[x];
+				int size = mem[array - 1];
+
+				char path[MAXSTRINGL];
+
+				for (int i = 0; i < size; i++)
+				{
+					path[i] = mem[array + i]; // FIXME: Only eng symbols
+				}
+				path[size] = '\0';
+
+				uintptr_t ptr = (uintptr_t)fopen(path, "r+");
+				memcpy(&mem[x], &ptr, sizeof(uintptr_t));
+				x++;
+			}
+			break;
+			case 9597: // fclose
+			{
+				uintptr_t ptr;
+				memcpy(&ptr, &mem[x - 1], sizeof(uintptr_t));
+				x -= 2;
+				
+				fclose((FILE *)ptr);
+			}
+			break;
+			case 9598: // fprintf
+			{
+				int array = mem[x--];
+				int size = mem[array - 1];
+
+				uintptr_t ptr;
+				memcpy(&ptr, &mem[x - 1], sizeof(uintptr_t));
+				x -= 2;
+
+				char str[MAXSTRINGL];
+
+				for (int i = 0; i < size; i++)
+				{
+					str[i] = mem[array + i]; // FIXME: Only eng symbols
+				}
+				str[size] = '\0';
+
+				fprintf((FILE *)ptr, "%s", str);
+			}
+			break;
+			case 9599: // fgetch
+			{
+				uintptr_t ptr;
+				memcpy(&ptr, &mem[--x], sizeof(uintptr_t));
+				
+				mem[x] = fgetc((FILE *)ptr);
 			}
 			break;
 
