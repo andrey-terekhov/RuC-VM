@@ -42,23 +42,10 @@
  */
 
 #include "defs.h"
-
-
-#define index_out_of_range	  1
-#define wrong_kop			  2
-#define wrong_arr_init		  3
-#define wrong_number_of_elems 4
-#define zero_devide			  5
-#define float_zero_devide	  6
-#define mem_overflow		  7
-#define sqrt_from_negat		  8
-#define log_from_negat		  9
-#define log10_from_negat	  10
-#define wrong_asin			  11
-#define wrong_string_init	  12
-#define printf_runtime_crash  13
-#define init_err			  14
-
+#include "error.h"
+#include "instuctions.h"
+#include "syntax.h"
+#include "tokens.h"
 
 int g, xx, iniproc, maxdisplg, wasmain;
 int reprtab[MAXREPRTAB], rp, identab[MAXIDENTAB], id, modetab[MAXMODETAB], md;
@@ -89,9 +76,9 @@ void *interpreter(void *);
 
 int szof(int type)
 {
-	return modetab[type] == MARRAY
+	return modetab[type] == TYPE_ARRAY
 			   ? 1
-			   : type == LFLOAT ? 2 : (type > 0 && modetab[type] == MSTRUCT) ? modetab[type + 1] : 1;
+			   : type == TYPE_FLOATING ? 2 : (type > 0 && modetab[type] == TYPE_STRUCTURE) ? modetab[type + 1] : 1;
 }
 
 void runtimeerr(int e, int i, int r)
@@ -230,24 +217,24 @@ void auxprint(int beg, int t, char before, char after)
 		printf("%c", before);
 	}
 
-	if (t == LINT)
+	if (t == TYPE_INTEGER)
 	{
 		printf("%i", r);
 	}
-	else if (t == LCHAR)
+	else if (t == TYPE_CHAR)
 	{
 		printf_char(r);
 	}
-	else if (t == LFLOAT)
+	else if (t == TYPE_FLOATING)
 	{
 		memcpy(&rf, &mem[beg], sizeof(double));
 		printf("%20.15f", rf);
 	}
-	else if (t == LVOID)
+	else if (t == TYPE_VOID)
 	{
 		printf(" значения типа ПУСТО печатать нельзя\n");
 	}
-	else if (modetab[t] == MARRAY) // здесь t уже точно положительный
+	else if (modetab[t] == TYPE_ARRAY) // здесь t уже точно положительный
 	{
 		int rr = r;
 		int i;
@@ -266,11 +253,11 @@ void auxprint(int beg, int t, char before, char after)
 		{
 			for (i = 0; i < mem[rr - 1]; i++)
 			{
-				auxprint(rr + i * d, type, 0, (type == LCHAR ? 0 : ' '));
+				auxprint(rr + i * d, type, 0, (type == TYPE_CHAR ? 0 : ' '));
 			}
 		}
 	}
-	else if (modetab[t] == MSTRUCT)
+	else if (modetab[t] == TYPE_STRUCTURE)
 	{
 		int cnt = modetab[t + 2];
 		int i;
@@ -306,24 +293,24 @@ void auxget(int beg, int t)
 	double rf;
 	// printf("beg=%i t=%i\n", beg, t);
 
-	if (t == LINT)
+	if (t == TYPE_INTEGER)
 	{
 		scanf(" %i", &mem[beg]);
 	}
-	else if (t == LCHAR)
+	else if (t == TYPE_CHAR)
 	{
 		mem[beg] = getf_char();
 	}
-	else if (t == LFLOAT)
+	else if (t == TYPE_FLOATING)
 	{
 		scanf(" %lf", &rf);
 		memcpy(&mem[beg], &rf, sizeof(double));
 	}
-	else if (t == LVOID)
+	else if (t == TYPE_VOID)
 	{
 		printf(" значения типа ПУСТО вводить нельзя\n");
 	}
-	else if (modetab[t] == MARRAY) // здесь t уже точно положительный
+	else if (modetab[t] == TYPE_ARRAY) // здесь t уже точно положительный
 	{
 		int rr = mem[beg];
 		int type = modetab[t + 1];
@@ -336,7 +323,7 @@ void auxget(int beg, int t)
 			auxget(rr + i * d, type);
 		}
 	}
-	else if (modetab[t] == MSTRUCT)
+	else if (modetab[t] == TYPE_STRUCTURE)
 	{
 		int cnt = modetab[t + 2];
 		int i;
@@ -434,14 +421,14 @@ void *interpreter(void *pcPnt)
 
 		switch (mem[pc++])
 		{
-			case STOP:
+			case IC_STOP:
 			{
 				flagstop = 0;
 				xx = x;
 			}
 			break;
 
-			case ASSERTC:
+			case IC_ASSERT:
 			{
 				int message = mem[x--];
 				int cond = mem[x--];
@@ -466,7 +453,7 @@ void *interpreter(void *pcPnt)
 			}
 			break;
 
-			case CREATEDIRECTC:
+			case IC_CREATE_DIR_ECT:
 			{
 				int *arg = malloc(sizeof(*arg));
 				*arg = pc;
@@ -474,7 +461,7 @@ void *interpreter(void *pcPnt)
 			}
 			break;
 
-			case CREATEC:
+			case IC_CREATE:
 			{
 				int *arg = malloc(sizeof(*arg));
 				*arg = mem[x];
@@ -484,40 +471,40 @@ void *interpreter(void *pcPnt)
 			}
 			break;
 
-			case JOINC:
+			case IC_JOIN:
 				t_join(mem[x--]);
 				break;
 
-			case SLEEPC:
+			case IC_SLEEP:
 				t_sleep(mem[x--]);
 				break;
 
-			case EXITDIRECTC:
-			case EXITC:
+			case IC_EXIT_DIR_ECT:
+			case IC_EXIT:
 				t_exit();
 				break;
 
-			case SEMCREATEC:
+			case IC_SEM_CREATE:
 				mem[x] = t_sem_create(mem[x]);
 				break;
 
-			case SEMPOSTC:
+			case IC_SEM_POST:
 				t_sem_post(mem[x--]);
 				break;
 
-			case SEMWAITC:
+			case IC_SEM_WAIT:
 				t_sem_wait(mem[x--]);
 				break;
 
-			case INITC:
+			case IC_INIT:
 				t_init();
 				break;
 
-			case DESTROYC:
+			case IC_DESTROY:
 				t_destroy();
 				break;
 
-			case MSGRECEIVEC:
+			case IC_MSG_RECEIVE:
 			{
 				struct msg_info m = t_msg_receive();
 				mem[++x] = m.numTh;
@@ -525,7 +512,7 @@ void *interpreter(void *pcPnt)
 			}
 			break;
 
-			case MSGSENDC:
+			case IC_MSG_SEND:
 			{
 				struct msg_info m;
 				m.data = mem[x--];
@@ -534,7 +521,7 @@ void *interpreter(void *pcPnt)
 			}
 			break;
 
-			case GETNUMC:
+			case IC_GETNUM:
 				mem[++x] = numTh;
 				break;
 
@@ -591,11 +578,11 @@ void *interpreter(void *pcPnt)
 				break;
 #endif
 
-			case FUNCBEG:
+			case IC_FUNC_BEG:
 				pc = mem[pc + 1];
 				break;
 
-			case PRINT:
+			case IC_PRINT:
 			{
 				int t;
 #ifdef __APPLE__
@@ -615,7 +602,7 @@ void *interpreter(void *pcPnt)
 			}
 			break;
 
-			case PRINTID:
+			case IC_PRINTID:
 			{
 #ifdef __APPLE__
 				sem_wait(sempr);
@@ -631,7 +618,7 @@ void *interpreter(void *pcPnt)
 					printf_char(reprtab[r++]);
 				} while (reprtab[r] != 0);
 
-				if (prtype > 0 && modetab[prtype] == MARRAY && modetab[prtype + 1] > 0)
+				if (prtype > 0 && modetab[prtype] == TYPE_ARRAY && modetab[prtype + 1] > 0)
 				{
 					auxprint(dsp(identab[i + 3], l), prtype, '\n', '\n');
 				}
@@ -656,7 +643,7 @@ void *interpreter(void *pcPnt)
 			 *	Если захотим передавать динамически формируемые строки, нужно будет откуда-то брать весь набор типов
 			 *	печатаемого
 			 */
-			case PRINTF:
+			case IC_PRINTF:
 			{
 				int sumsize, strbeg;
 
@@ -678,7 +665,7 @@ void *interpreter(void *pcPnt)
 			}
 			break;
 
-			case GETID:
+			case IC_GETID:
 			{
 #ifdef __APPLE__
 				sem_wait(sempr);
@@ -705,16 +692,16 @@ void *interpreter(void *pcPnt)
 			}
 			break;
 
-			case ABSIC:
+			case IC_ABSI:
 				mem[x] = abs(mem[x]);
 				break;
-			case ABSC:
+			case IC_ABS:
 			{
 				rf = fabs(rf);
 				memcpy(&mem[x - 1], &rf, sizeof(double));
 			}
 			break;
-			case SQRTC:
+			case IC_SQRT:
 			{
 				if (rf < 0)
 				{
@@ -724,25 +711,25 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[x - 1], &rf, sizeof(double));
 			}
 			break;
-			case EXPC:
+			case IC_EXP:
 			{
 				rf = exp(rf);
 				memcpy(&mem[x - 1], &rf, sizeof(double));
 			}
 			break;
-			case SINC:
+			case IC_SIN:
 			{
 				rf = sin(rf);
 				memcpy(&mem[x - 1], &rf, sizeof(double));
 			}
 			break;
-			case COSC:
+			case IC_COS:
 			{
 				rf = cos(rf);
 				memcpy(&mem[x - 1], &rf, sizeof(double));
 			}
 			break;
-			case LOGC:
+			case IC_LOG:
 			{
 				if (rf <= 0)
 				{
@@ -752,7 +739,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[x - 1], &rf, sizeof(double));
 			}
 			break;
-			case LOG10C:
+			case IC_LOG10:
 			{
 				if (rf <= 0)
 				{
@@ -762,7 +749,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[x - 1], &rf, sizeof(double));
 			}
 			break;
-			case ASINC:
+			case IC_ASIN:
 			{
 				if (rf < -1 || rf > 1)
 				{
@@ -772,25 +759,25 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[x - 1], &rf, sizeof(double));
 			}
 			break;
-			case RANDC:
+			case IC_RAND:
 			{
 				rf = (double)rand() / RAND_MAX;
 				memcpy(&mem[++x], &rf, sizeof(double));
 				++x;
 			}
 			break;
-			case ROUNDC:
+			case IC_ROUND:
 				mem[--x] = rf < 0 ? (int)(rf - 0.5) : (int)(rf + 0.5);
 				break;
 
-			case STRCPYC:
+			case IC_STRCPY:
 			{
 				str2 = mem[x--];
 				a_str1 = mem[x--];
 				mem[a_str1] = str2;
 			}
 			break;
-			case STRNCPYC:
+			case IC_STRNCPY:
 			{
 				num = mem[x--];
 				str2 = mem[x--];
@@ -826,7 +813,7 @@ void *interpreter(void *pcPnt)
 				x--;
 			}
 			break;
-			case STRCATC:
+			case IC_STRCAT:
 			{
 				str2 = mem[x--];
 				a_str1 = mem[x--];
@@ -850,7 +837,7 @@ void *interpreter(void *pcPnt)
 				x--;
 			}
 			break;
-			case STRNCATC:
+			case IC_STRNCAT:
 			{
 				num = mem[x--];
 				str2 = mem[x--];
@@ -875,7 +862,7 @@ void *interpreter(void *pcPnt)
 				x--;
 			}
 			break;
-			case STRCMPC:
+			case IC_STRCMP:
 			{
 				str2 = mem[x--];
 				a_str1 = mem[x];
@@ -913,7 +900,7 @@ void *interpreter(void *pcPnt)
 				}
 			}
 			break;
-			case STRNCMPC:
+			case IC_STRNCMP:
 			{
 				num = mem[x--];
 				str2 = mem[x--];
@@ -959,7 +946,7 @@ void *interpreter(void *pcPnt)
 				}
 			}
 			break;
-			case STRSTRC:
+			case IC_STRSTR:
 			{
 				int j, flag = 0;
 				str2 = mem[x--];
@@ -994,13 +981,13 @@ void *interpreter(void *pcPnt)
 				}
 			}
 			break;
-			case STRLENC:
+			case IC_STRLEN:
 			{
 				a_str1 = mem[x];
 				mem[x] = mem[a_str1 - 1];
 			}
 			break;
-			case STRUCTWITHARR:
+			case IC_STRUCT_WITH_ARR:
 			{
 				int oldpc, oldbase = base, procnum;
 				base = dsp(mem[pc++], l);
@@ -1017,7 +1004,7 @@ void *interpreter(void *pcPnt)
 				flagstop = 1;
 			}
 			break;
-			case DEFARR: // N, d, displ, proc	на стеке N1, N2, ... , NN
+			case IC_DEFARR: // N, d, displ, proc	на стеке N1, N2, ... , NN
 			{
 				int N = mem[pc++];
 				int d = mem[pc++];
@@ -1124,7 +1111,7 @@ void *interpreter(void *pcPnt)
 				adinit = x + 1; // при usual == 1 использоваться не будет
 			}
 			break;
-			case BEGINIT:
+			case IC_BEG_INIT:
 				mem[++x] = mem[pc++];
 				break;
 			/*
@@ -1132,7 +1119,7 @@ void *interpreter(void *pcPnt)
 				pc++;
 				break;
 			*/
-			case STRINGINIT:
+			case IC_STRING_INIT:
 			{
 				di = mem[pc++];
 				r = mem[di < 0 ? g - di : l + di];
@@ -1150,7 +1137,7 @@ void *interpreter(void *pcPnt)
 				}
 			}
 			break;
-			case ARRINIT:
+			case IC_ARR_INIT:
 			{
 				N = mem[pc++]; // N - размерность
 				d = mem[pc++]; // d - шаг
@@ -1236,38 +1223,38 @@ void *interpreter(void *pcPnt)
 			}
 			break;
 
-			case LI:
+			case IC_LI:
 				mem[++x] = mem[pc++];
 				break;
-			case LID:
+			case IC_LID:
 			{
 				memcpy(&mem[++x], &mem[pc++], sizeof(double));
 				++x;
 				++pc;
 			}
 			break;
-			case LOAD:
+			case IC_LOAD:
 				mem[++x] = mem[dsp(mem[pc++], l)];
 				break;
-			case LOADD:
+			case IC_LOADD:
 			{
 				memcpy(&mem[++x], &mem[dsp(mem[pc++], l)], sizeof(double));
 				++x;
 			}
 			break;
-			case LAT:
+			case IC_LAT:
 				mem[x] = mem[mem[x]];
 				break;
-			case LATD:
+			case IC_LATD:
 			{
 				memcpy(&rf, &mem[mem[x]], sizeof(double));
 				memcpy(&mem[x++], &rf, sizeof(double));
 			}
 			break;
-			case LA:
+			case IC_LA:
 				mem[++x] = dsp(mem[pc++], l);
 				break;
-			case CALL1:
+			case IC_CALL1:
 			{
 				mem[l + 1] = ++x;
 				mem[x++] = l;
@@ -1275,7 +1262,7 @@ void *interpreter(void *pcPnt)
 				mem[x] = 0;	  // pc в момент вызова
 			}
 			break;
-			case CALL2:
+			case IC_CALL2:
 			{
 				i = mem[pc++];
 				entry = functions[i > 0 ? i : mem[l - i]];
@@ -1291,7 +1278,7 @@ void *interpreter(void *pcPnt)
 				pc = entry + 3;
 			}
 			break;
-			case RETURNVAL:
+			case IC_RETURN_VAL:
 			{
 				d = mem[pc++];
 				pc = mem[l + 2];
@@ -1315,7 +1302,7 @@ void *interpreter(void *pcPnt)
 				}
 			}
 			break;
-			case RETURNVOID:
+			case IC_RETURN_VOID:
 			{
 				pc = mem[l + 2];
 
@@ -1331,19 +1318,19 @@ void *interpreter(void *pcPnt)
 				}
 			}
 			break;
-			case NOP:
+			case IC_NOP:
 				break;
-			case B:
-			case STRING:
+			case IC_B:
+			case TK_STRING:
 				pc = mem[pc];
 				break;
-			case BE0:
+			case IC_BE0:
 				pc = (mem[x--]) ? pc + 1 : mem[pc];
 				break;
-			case BNE0:
+			case IC_BNE0:
 				pc = (mem[x--]) ? mem[pc] : pc + 1;
 				break;
-			case UPBC:
+			case IC_UPB:
 			{
 				from = mem[x--];
 				N = mem[x];
@@ -1355,10 +1342,10 @@ void *interpreter(void *pcPnt)
 				mem[x] = mem[from - 1];
 			}
 			break;
-			case SELECT:
+			case IC_SELECT:
 				mem[x] += mem[pc++]; // ident displ
 				break;
-			case COPY00:
+			case IC_COPY00:
 			{
 				di = dsp(mem[pc++], l);
 				di1 = dsp(mem[pc++], l);
@@ -1370,7 +1357,7 @@ void *interpreter(void *pcPnt)
 				}
 			}
 			break;
-			case COPY01:
+			case IC_COPY01:
 			{
 				di = dsp(mem[pc++], l);
 				len = mem[pc++];
@@ -1382,7 +1369,7 @@ void *interpreter(void *pcPnt)
 				}
 			}
 			break;
-			case COPY10:
+			case IC_COPY10:
 			{
 				di = mem[x--];
 				di1 = dsp(mem[pc++], l);
@@ -1394,7 +1381,7 @@ void *interpreter(void *pcPnt)
 				}
 			}
 			break;
-			case COPY11:
+			case IC_COPY11:
 			{
 				di1 = mem[x--];
 				di = mem[x--];
@@ -1406,7 +1393,7 @@ void *interpreter(void *pcPnt)
 				}
 			}
 			break;
-			case COPY0ST:
+			case IC_COPY0ST:
 			{
 				di = dsp(mem[pc++], l);
 				len = mem[pc++];
@@ -1417,7 +1404,7 @@ void *interpreter(void *pcPnt)
 				}
 			}
 			break;
-			case COPY1ST:
+			case IC_COPY1ST:
 			{
 				di = mem[x--];
 				len = mem[pc++];
@@ -1428,7 +1415,7 @@ void *interpreter(void *pcPnt)
 				}
 			}
 			break;
-			case COPY0STASS:
+			case IC_COPY0ST_ASSIGN:
 			{
 				di = dsp(mem[pc++], l);
 				len = mem[pc++];
@@ -1440,7 +1427,7 @@ void *interpreter(void *pcPnt)
 				}
 			}
 			break;
-			case COPY1STASS:
+			case IC_COPY1ST_ASSIGN:
 			{
 				len = mem[pc++];
 				x -= len;
@@ -1452,7 +1439,7 @@ void *interpreter(void *pcPnt)
 				}
 			}
 			break;
-			case COPYST:
+			case IC_COPYST:
 			{
 				di = mem[pc++];		// смещ поля
 				len = mem[pc++];	// длина поля
@@ -1466,7 +1453,7 @@ void *interpreter(void *pcPnt)
 			}
 			break;
 
-			case SLICE:
+			case IC_SLICE:
 			{
 				d = mem[pc++];
 				i = mem[x--]; // index
@@ -1479,13 +1466,13 @@ void *interpreter(void *pcPnt)
 				mem[x] = r + i * d;
 			}
 			break;
-			case WIDEN:
+			case IC_WIDEN:
 			{
 				rf = (double)mem[x];
 				memcpy(&mem[x++], &rf, sizeof(double));
 			}
 			break;
-			case WIDEN1:
+			case IC_WIDEN1:
 			{
 				mem[x + 1] = mem[x];
 				mem[x] = mem[x - 1];
@@ -1494,428 +1481,428 @@ void *interpreter(void *pcPnt)
 				++x;
 			}
 			break;
-			case _DOUBLE:
+			case IC_DUPLICATE:
 			{
 				r = mem[x];
 				mem[++x] = r;
 			}
 			break;
 
-			case ROWING: // ROWING
+			case IC_ROWING: // ROWING
 				mem[g + 3] = mem[x];
 				mem[x] = g + 3;
 				break;
 
-			case ROWINGD: // ROWINGD
+			case IC_ROWING_D: // ROWINGD
 				mem[g + 5] = mem[x - 1];
 				mem[g + 6] = mem[x];
 				mem[--x] = g + 5;
 				break;
 
-			case ASS:
+			case IC_ASSIGN:
 				mem[dsp(mem[pc++], l)] = mem[x];
 				break;
-			case REMASS:
+			case IC_REM_ASSIGN:
 			{
 				r = mem[dsp(mem[pc++], l)] %= check_zero_int(mem[x]);
 				mem[x] = r;
 			}
 			break;
-			case SHLASS:
+			case IC_SHL_ASSIGN:
 			{
 				r = mem[dsp(mem[pc++], l)] <<= mem[x];
 				mem[x] = r;
 			}
 			break;
-			case SHRASS:
+			case IC_SHR_ASSIGN:
 			{
 				r = mem[dsp(mem[pc++], l)] >>= mem[x];
 				mem[x] = r;
 			}
 			break;
-			case ANDASS:
+			case IC_AND_ASSIGN:
 			{
 				r = mem[dsp(mem[pc++], l)] &= mem[x];
 				mem[x] = r;
 			}
 			break;
-			case EXORASS:
+			case IC_XOR_ASSIGN:
 			{
 				r = mem[dsp(mem[pc++], l)] ^= mem[x];
 				mem[x] = r;
 			}
 			break;
-			case ORASS:
+			case IC_OR_ASSIGN:
 			{
 				r = mem[dsp(mem[pc++], l)] |= mem[x];
 				mem[x] = r;
 			}
 			break;
-			case PLUSASS:
+			case IC_ADD_ASSIGN:
 			{
 				r = mem[dsp(mem[pc++], l)] += mem[x];
 				mem[x] = r;
 			}
 			break;
-			case MINUSASS:
+			case IC_SUB_ASSIGN:
 			{
 				r = mem[dsp(mem[pc++], l)] -= mem[x];
 				mem[x] = r;
 			}
 			break;
-			case MULTASS:
+			case IC_MUL_ASSIGN:
 			{
 				r = mem[dsp(mem[pc++], l)] *= mem[x];
 				mem[x] = r;
 			}
 			break;
-			case DIVASS:
+			case IC_DIV_ASSIGN:
 			{
 				r = mem[dsp(mem[pc++], l)] /= check_zero_int(mem[x]);
 				mem[x] = r;
 			}
 			break;
 
-			case ASSV:
+			case IC_ASSIGN_V:
 				mem[dsp(mem[pc++], l)] = mem[x--];
 				break;
-			case REMASSV:
+			case IC_REM_ASSIGN_V:
 				mem[dsp(mem[pc++], l)] %= check_zero_int(mem[x--]);
 				break;
-			case SHLASSV:
+			case IC_SHL_ASSIGN_V:
 				mem[dsp(mem[pc++], l)] <<= mem[x--];
 				break;
-			case SHRASSV:
+			case IC_SHR_ASSIGN_V:
 				mem[dsp(mem[pc++], l)] >>= mem[x--];
 				break;
-			case ANDASSV:
+			case IC_AND_ASSIGN_V:
 				mem[dsp(mem[pc++], l)] &= mem[x--];
 				break;
-			case EXORASSV:
+			case IC_XOR_ASSIGN_V:
 				mem[dsp(mem[pc++], l)] ^= mem[x--];
 				break;
-			case ORASSV:
+			case IC_OR_ASSIGN_V:
 				mem[dsp(mem[pc++], l)] |= mem[x--];
 				break;
-			case PLUSASSV:
+			case IC_ADD_ASSIGN_V:
 				mem[dsp(mem[pc++], l)] += mem[x--];
 				break;
-			case MINUSASSV:
+			case IC_SUB_ASSIGN_V:
 				mem[dsp(mem[pc++], l)] -= mem[x--];
 				break;
-			case MULTASSV:
+			case IC_MUL_ASSIGN_V:
 				mem[dsp(mem[pc++], l)] *= mem[x--];
 				break;
-			case DIVASSV:
+			case IC_DIV_ASSIGN_V:
 				mem[dsp(mem[pc++], l)] /= check_zero_int(mem[x--]);
 				break;
 
-			case ASSAT:
+			case IC_ASSIGN_AT:
 			{
 				r = mem[mem[x - 1]] = mem[x];
 				mem[--x] = r;
 			}
 			break;
-			case REMASSAT:
+			case IC_REM_ASSIGN_AT:
 			{
 				r = mem[mem[x - 1]] %= check_zero_int(mem[x]);
 				mem[--x] = r;
 			}
 			break;
-			case SHLASSAT:
+			case IC_SHL_ASSIGN_AT:
 			{
 				r = mem[mem[x - 1]] <<= mem[x];
 				mem[--x] = r;
 			}
 			break;
-			case SHRASSAT:
+			case IC_SHR_ASSIGN_AT:
 			{
 				r = mem[mem[x - 1]] >>= mem[x];
 				mem[--x] = r;
 			}
 			break;
-			case ANDASSAT:
+			case IC_AND_ASSIGN_AT:
 			{
 				r = mem[mem[x - 1]] &= mem[x];
 				mem[--x] = r;
 			}
 			break;
-			case EXORASSAT:
+			case IC_XOR_ASSIGN_AT:
 			{
 				r = mem[mem[x - 1]] ^= mem[x];
 				mem[--x] = r;
 			}
 			break;
-			case ORASSAT:
+			case IC_OR_ASSIGN_AT:
 			{
 				r = mem[mem[x - 1]] |= mem[x];
 				mem[--x] = r;
 			}
 			break;
-			case PLUSASSAT:
+			case IC_ADD_ASSIGN_AT:
 			{
 				r = mem[mem[x - 1]] += mem[x];
 				mem[--x] = r;
 			}
 			break;
-			case MINUSASSAT:
+			case IC_SUB_ASSIGN_AT:
 			{
 				r = mem[mem[x - 1]] -= mem[x];
 				mem[--x] = r;
 			}
 			break;
-			case MULTASSAT:
+			case IC_MUL_ASSIGN_AT:
 			{
 				r = mem[mem[x - 1]] *= mem[x];
 				mem[--x] = r;
 			}
 			break;
-			case DIVASSAT:
+			case IC_DIV_ASSIGN_AT:
 			{
 				r = mem[mem[x - 1]] /= check_zero_int(mem[x]);
 				mem[--x] = r;
 			}
 			break;
 
-			case ASSATV:
+			case IC_ASSIGN_AT_V:
 			{
 				mem[mem[x - 1]] = mem[x];
 				x -= 2;
 			}
 			break;
-			case REMASSATV:
+			case IC_REM_ASSIGN_AT_V:
 			{
 				mem[mem[x - 1]] %= check_zero_int(mem[x]);
 				x -= 2;
 			}
 			break;
-			case SHLASSATV:
+			case IC_SHL_ASSIGN_AT_V:
 			{
 				mem[mem[x - 1]] <<= mem[x];
 				x -= 2;
 			}
 			break;
-			case SHRASSATV:
+			case IC_SHR_ASSIGN_AT_V:
 			{
 				mem[mem[x - 1]] >>= mem[x];
 				x -= 2;
 			}
 			break;
-			case ANDASSATV:
+			case IC_AND_ASSIGN_AT_V:
 			{
 				mem[mem[x - 1]] &= mem[x];
 				x -= 2;
 			}
 			break;
-			case EXORASSATV:
+			case IC_XOR_ASSIGN_AT_V:
 			{
 				mem[mem[x - 1]] ^= mem[x];
 				x -= 2;
 			}
 			break;
-			case ORASSATV:
+			case IC_OR_ASSIGN_AT_V:
 			{
 				mem[mem[x - 1]] |= mem[x];
 				x -= 2;
 			}
 			break;
-			case PLUSASSATV:
+			case IC_ADD_ASSIGN_AT_V:
 			{
 				mem[mem[x - 1]] += mem[x];
 				x -= 2;
 			}
 			break;
-			case MINUSASSATV:
+			case IC_SUB_ASSIGN_AT_V:
 			{
 				mem[mem[x - 1]] -= mem[x];
 				x -= 2;
 			}
 			break;
-			case MULTASSATV:
+			case IC_MUL_ASSIGN_AT_V:
 			{
 				mem[mem[x - 1]] *= mem[x];
 				x -= 2;
 			}
 			break;
-			case DIVASSATV:
+			case IC_DIV_ASSIGN_AT_V:
 			{
 				mem[mem[x - 1]] /= check_zero_int(mem[x]);
 				x -= 2;
 			}
 			break;
 
-			case LOGOR:
+			case IC_LOG_OR:
 			{
 				mem[x - 1] = mem[x - 1] || mem[x];
 				x--;
 			}
 			break;
-			case LOGAND:
+			case IC_LOG_AND:
 			{
 				mem[x - 1] = mem[x - 1] && mem[x];
 				x--;
 			}
 			break;
-			case LOR:
+			case IC_OR:
 			{
 				mem[x - 1] |= mem[x];
 				x--;
 			}
 			break;
-			case LEXOR:
+			case IC_XOR:
 			{
 				mem[x - 1] ^= mem[x];
 				x--;
 			}
 			break;
-			case LAND:
+			case IC_AND:
 			{
 				mem[x - 1] &= mem[x];
 				x--;
 			}
 			break;
-			case LSHR:
+			case IC_SHR:
 			{
 				mem[x - 1] >>= mem[x];
 				x--;
 			}
 			break;
-			case LSHL:
+			case IC_SHL:
 			{
 				mem[x - 1] <<= mem[x];
 				x--;
 			}
 			break;
-			case LREM:
+			case IC_REM:
 			{
 				mem[x - 1] %= mem[x];
 				x--;
 			}
 			break;
-			case EQEQ:
+			case IC_EQ:
 			{
 				mem[x - 1] = mem[x - 1] == mem[x];
 				x--;
 			}
 			break;
-			case NOTEQ:
+			case IC_NE:
 			{
 				mem[x - 1] = mem[x - 1] != mem[x];
 				x--;
 			}
 			break;
-			case LLT:
+			case IC_LT:
 			{
 				mem[x - 1] = mem[x - 1] < mem[x];
 				x--;
 			}
 			break;
-			case LGT:
+			case IC_GT:
 			{
 				mem[x - 1] = mem[x - 1] > mem[x];
 				x--;
 			}
 			break;
-			case LLE:
+			case IC_LE:
 			{
 				mem[x - 1] = mem[x - 1] <= mem[x];
 				x--;
 			}
 			break;
-			case LGE:
+			case IC_GE:
 			{
 				mem[x - 1] = mem[x - 1] >= mem[x];
 				x--;
 			}
 			break;
-			case LPLUS:
+			case IC_ADD:
 			{
 				mem[x - 1] += mem[x];
 				x--;
 			}
 			break;
-			case LMINUS:
+			case IC_SUB:
 			{
 				mem[x - 1] -= mem[x];
 				x--;
 			}
 			break;
-			case LMULT:
+			case IC_MUL:
 			{
 				mem[x - 1] *= mem[x];
 				x--;
 			}
 			break;
-			case LDIV:
+			case IC_DIV:
 			{
 				mem[x - 1] /= check_zero_int(mem[x]);
 				x--;
 			}
 			break;
-			case POSTINC:
+			case IC_POST_INC:
 			{
 				mem[++x] = mem[r = dsp(mem[pc++], l)];
 				mem[r]++;
 			}
 			break;
-			case POSTDEC:
+			case IC_POST_DEC:
 			{
 				mem[++x] = mem[r = dsp(mem[pc++], l)];
 				mem[r]--;
 			}
 			break;
-			case INC:
+			case IC_PRE_INC:
 				mem[++x] = ++mem[dsp(mem[pc++], l)];
 				break;
-			case DEC:
+			case IC_PRE_DEC:
 				mem[++x] = --mem[dsp(mem[pc++], l)];
 				break;
-			case POSTINCAT:
+			case IC_POST_INC_AT:
 			{
 				mem[x] = mem[r = mem[x]];
 				mem[r]++;
 			}
 			break;
-			case POSTDECAT:
+			case IC_POST_DEC_AT:
 			{
 				mem[x] = mem[r = mem[x]];
 				mem[r]--;
 			}
 			break;
-			case INCAT:
+			case IC_PRE_INC_AT:
 				mem[x] = ++mem[mem[x]];
 				break;
-			case DECAT:
+			case IC_PRE_DEC_AT:
 				mem[x] = --mem[mem[x]];
 				break;
-			case INCV:
-			case POSTINCV:
+			case IC_PRE_INC_V:
+			case IC_POST_INC_V:
 				mem[dsp(mem[pc++], l)]++;
 				break;
-			case DECV:
-			case POSTDECV:
+			case IC_PRE_DEC_V:
+			case IC_POST_DEC_V:
 				mem[dsp(mem[pc++], l)]--;
 				break;
-			case INCATV:
-			case POSTINCATV:
+			case IC_PRE_INC_AT_V:
+			case IC_POST_INC_AT_V:
 				mem[mem[x--]]++;
 				break;
-			case DECATV:
-			case POSTDECATV:
+			case IC_PRE_DEC_AT_V:
+			case IC_POST_DEC_AT_V:
 				mem[mem[x--]]--;
 				break;
 
-			case UNMINUS:
+			case IC_UNMINUS:
 				mem[x] = -mem[x];
 				break;
 
-			case ASSR:
+			case IC_ASSIGN_R:
 			{
 				mem[r = dsp(mem[pc++], l)] = mem[x - 1];
 				mem[r + 1] = mem[x];
 			}
 			break;
-			case PLUSASSR:
+			case IC_ADD_ASSIGN_R:
 			{
 				memcpy(&lf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
 				lf += rf;
@@ -1923,7 +1910,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &lf, sizeof(double));
 			}
 			break;
-			case MINUSASSR:
+			case IC_SUB_ASSIGN_R:
 			{
 				memcpy(&lf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
 				lf -= rf;
@@ -1931,7 +1918,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &lf, sizeof(double));
 			}
 			break;
-			case MULTASSR:
+			case IC_MUL_ASSIGN_R:
 			{
 				memcpy(&lf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
 				lf *= rf;
@@ -1939,7 +1926,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &lf, sizeof(double));
 			}
 			break;
-			case DIVASSR:
+			case IC_DIV_ASSIGN_R:
 			{
 				memcpy(&lf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
 				lf /= check_zero_float(rf);
@@ -1948,7 +1935,7 @@ void *interpreter(void *pcPnt)
 			}
 			break;
 
-			case ASSATR:
+			case IC_ASSIGN_AT_R:
 			{
 				r = mem[x - 2];
 				mem[r] = mem[x - 2] = mem[x - 1];
@@ -1956,7 +1943,7 @@ void *interpreter(void *pcPnt)
 				x--;
 			}
 			break;
-			case PLUSASSATR:
+			case IC_ADD_ASSIGN_AT_R:
 			{
 				memcpy(&lf, &mem[i = mem[x -= 2]], sizeof(double));
 				lf += rf;
@@ -1964,7 +1951,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &lf, sizeof(double));
 			}
 			break;
-			case MINUSASSATR:
+			case IC_SUB_ASSIGN_AT_R:
 			{
 				memcpy(&lf, &mem[i = mem[x -= 2]], sizeof(double));
 				lf -= rf;
@@ -1972,7 +1959,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &lf, sizeof(double));
 			}
 			break;
-			case MULTASSATR:
+			case IC_MUL_ASSIGN_AT_R:
 			{
 				memcpy(&lf, &mem[i = mem[x -= 2]], sizeof(double));
 				lf *= rf;
@@ -1980,7 +1967,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &lf, sizeof(double));
 			}
 			break;
-			case DIVASSATR:
+			case IC_DIV_ASSIGN_AT_R:
 			{
 				memcpy(&lf, &mem[i = mem[x -= 2]], sizeof(double));
 				lf /= check_zero_float(rf);
@@ -1989,7 +1976,7 @@ void *interpreter(void *pcPnt)
 			}
 			break;
 
-			case ASSRV:
+			case IC_ASSIGN_R_V:
 			{
 				r = dsp(mem[pc++], l);
 				mem[r + 1] = mem[x--];
@@ -1997,7 +1984,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&lf, &mem[r], sizeof(double));
 			}
 			break;
-			case PLUSASSRV:
+			case IC_ADD_ASSIGN_R_V:
 			{
 				memcpy(&lf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
 				lf += rf;
@@ -2005,7 +1992,7 @@ void *interpreter(void *pcPnt)
 				x -= 2;
 			}
 			break;
-			case MINUSASSRV:
+			case IC_SUB_ASSIGN_R_V:
 			{
 				memcpy(&lf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
 				lf -= rf;
@@ -2013,7 +2000,7 @@ void *interpreter(void *pcPnt)
 				x -= 2;
 			}
 			break;
-			case MULTASSRV:
+			case IC_MUL_ASSIGN_R_V:
 			{
 				memcpy(&lf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
 				lf *= rf;
@@ -2021,7 +2008,7 @@ void *interpreter(void *pcPnt)
 				x -= 2;
 			}
 			break;
-			case DIVASSRV:
+			case IC_DIV_ASSIGN_R_V:
 			{
 				memcpy(&lf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
 				lf /= check_zero_float(rf);
@@ -2030,14 +2017,14 @@ void *interpreter(void *pcPnt)
 			}
 			break;
 
-			case ASSATRV:
+			case IC_ASSIGN_AT_R_V:
 			{
 				r = mem[x - 2];
 				mem[r + 1] = mem[x--];
 				mem[r] = mem[x--];
 			}
 			break;
-			case PLUSASSATRV:
+			case IC_ADD_ASSIGN_AT_R_V:
 			{
 				memcpy(&lf, &mem[i = mem[x -= 2]], sizeof(double));
 				lf += rf;
@@ -2045,7 +2032,7 @@ void *interpreter(void *pcPnt)
 				--x;
 			}
 			break;
-			case MINUSASSATRV:
+			case IC_SUB_ASSIGN_AT_R_V:
 			{
 				memcpy(&lf, &mem[i = mem[x -= 2]], sizeof(double));
 				lf -= rf;
@@ -2053,7 +2040,7 @@ void *interpreter(void *pcPnt)
 				--x;
 			}
 			break;
-			case MULTASSATRV:
+			case IC_MUL_ASSIGN_AT_R_V:
 			{
 				memcpy(&lf, &mem[i = mem[x -= 2]], sizeof(double));
 				lf *= rf;
@@ -2061,7 +2048,7 @@ void *interpreter(void *pcPnt)
 				--x;
 			}
 			break;
-			case DIVASSATRV:
+			case IC_DIV_ASSIGN_AT_R_V:
 			{
 				memcpy(&lf, &mem[i = mem[x -= 2]], sizeof(double));
 				lf /= check_zero_float(rf);
@@ -2070,71 +2057,71 @@ void *interpreter(void *pcPnt)
 			}
 			break;
 
-			case EQEQR:
+			case IC_EQ_R:
 			{
 				memcpy(&lf, &mem[x -= 3], sizeof(double));
 				mem[x] = lf == rf;
 			}
 			break;
-			case NOTEQR:
+			case IC_NE_R:
 			{
 				memcpy(&lf, &mem[x -= 3], sizeof(double));
 				mem[x] = lf != rf;
 			}
 			break;
-			case LLTR:
+			case IC_LT_R:
 			{
 				memcpy(&lf, &mem[x -= 3], sizeof(double));
 				mem[x] = lf < rf;
 			}
 			break;
-			case LGTR:
+			case IC_GT_R:
 			{
 				memcpy(&lf, &mem[x -= 3], sizeof(double));
 				mem[x] = lf > rf;
 			}
 			break;
-			case LLER:
+			case IC_LE_R:
 			{
 				memcpy(&lf, &mem[x -= 3], sizeof(double));
 				mem[x] = lf <= rf;
 			}
 			break;
-			case LGER:
+			case IC_GE_R:
 			{
 				memcpy(&lf, &mem[x -= 3], sizeof(double));
 				mem[x] = lf >= rf;
 			}
 			break;
-			case LPLUSR:
+			case IC_ADD_R:
 			{
 				memcpy(&lf, &mem[x -= 3], sizeof(double));
 				lf += rf;
 				memcpy(&mem[x++], &lf, sizeof(double));
 			}
 			break;
-			case LMINUSR:
+			case IC_SUB_R:
 			{
 				memcpy(&lf, &mem[x -= 3], sizeof(double));
 				lf -= rf;
 				memcpy(&mem[x++], &lf, sizeof(double));
 			}
 			break;
-			case LMULTR:
+			case IC_MUL_R:
 			{
 				memcpy(&lf, &mem[x -= 3], sizeof(double));
 				lf *= rf;
 				memcpy(&mem[x++], &lf, sizeof(double));
 			}
 			break;
-			case LDIVR:
+			case IC_DIV_R:
 			{
 				memcpy(&lf, &mem[x -= 3], sizeof(double));
 				lf /= check_zero_float(rf);
 				memcpy(&mem[x++], &lf, sizeof(double));
 			}
 			break;
-			case POSTINCR:
+			case IC_POST_INC_R:
 			{
 				memcpy(&rf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
 				memcpy(&mem[x + 1], &rf, sizeof(double));
@@ -2143,7 +2130,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
 			break;
-			case POSTDECR:
+			case IC_POST_DEC_R:
 			{
 				memcpy(&rf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
 				memcpy(&mem[x + 1], &rf, sizeof(double));
@@ -2152,7 +2139,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
 			break;
-			case INCR:
+			case IC_PRE_INC_R:
 			{
 				memcpy(&rf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
 				++rf;
@@ -2161,7 +2148,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
 			break;
-			case DECR:
+			case IC_PRE_DEC_R:
 			{
 				memcpy(&rf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
 				--rf;
@@ -2170,7 +2157,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
 			break;
-			case POSTINCATR:
+			case IC_POST_INC_AT_R:
 			{
 				memcpy(&rf, &mem[i = mem[x]], sizeof(double));
 				memcpy(&mem[x + 1], &rf, sizeof(double));
@@ -2179,7 +2166,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
 			break;
-			case POSTDECATR:
+			case IC_POST_DEC_AT_R:
 			{
 				memcpy(&rf, &mem[i = mem[x]], sizeof(double));
 				memcpy(&mem[x + 1], &rf, sizeof(double));
@@ -2188,7 +2175,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
 			break;
-			case INCATR:
+			case IC_PRE_INC_AT_R:
 			{
 				memcpy(&rf, &mem[i = mem[x]], sizeof(double));
 				++rf;
@@ -2197,7 +2184,7 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
 			break;
-			case DECATR:
+			case IC_PRE_DEC_AT_R:
 			{
 				memcpy(&rf, &mem[i = mem[x]], sizeof(double));
 				--rf;
@@ -2206,32 +2193,32 @@ void *interpreter(void *pcPnt)
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
 			break;
-			case INCRV:
-			case POSTINCRV:
+			case IC_PRE_INC_R_V:
+			case IC_POST_INC_R_V:
 			{
 				memcpy(&rf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
 				++rf;
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
 			break;
-			case DECRV:
-			case POSTDECRV:
+			case IC_PRE_DEC_R_V:
+			case IC_POST_DEC_R_V:
 			{
 				memcpy(&rf, &mem[i = dsp(mem[pc++], l)], sizeof(double));
 				--rf;
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
 			break;
-			case INCATRV:
-			case POSTINCATRV:
+			case IC_PRE_INC_AT_R_V:
+			case IC_POST_INC_AT_R_V:
 			{
 				memcpy(&rf, &mem[i = mem[x--]], sizeof(double));
 				++rf;
 				memcpy(&mem[i], &rf, sizeof(double));
 			}
 			break;
-			case DECATRV:
-			case POSTDECATRV:
+			case IC_PRE_DEC_AT_R_V:
+			case IC_POST_DEC_AT_R_V:
 			{
 				memcpy(&rf, &mem[i = mem[x--]], sizeof(double));
 				--rf;
@@ -2239,16 +2226,16 @@ void *interpreter(void *pcPnt)
 			}
 			break;
 
-			case UNMINUSR:
+			case IC_UNMINUS_R:
 			{
 				rf = -rf;
 				memcpy(&mem[x - 1], &rf, sizeof(double));
 			}
 			break;
-			case LNOT:
+			case IC_NOT:
 				mem[x] = ~mem[x];
 				break;
-			case LOGNOT:
+			case IC_LOG_NOT:
 				mem[x] = !mem[x];
 				break;
 

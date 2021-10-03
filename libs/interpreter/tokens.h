@@ -1,5 +1,5 @@
 /*
- *	Copyright 2014 Andrey Terekhov
+ *	Copyright 2021 Andrey Terekhov, Ilya Andreev
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
@@ -16,13 +16,16 @@
 
 #pragma once
 
-#define MAXREPRTAB	10000
-#define MAXIDENTAB	10000
-#define MAXMODETAB	1000
-#define FUNCSIZE	100
-#define MAXSTRINGL	128
-#define INIPROSIZE	100
 
-#define MAXMEMSIZE		100000
-#define NUMOFTHREADS	10
-#define MAXMEMTHREAD	MAXMEMSIZE / NUMOFTHREADS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum TOKEN
+{
+    TK_STRING =	107,
+} token_t;
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
