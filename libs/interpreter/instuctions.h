@@ -28,6 +28,8 @@ typedef enum INSTURCTION
 	IC_PRINT,					/**< 'PRINT' instruction code */
 	IC_PRINTID,					/**< 'PRINTID' instruction code */
 
+	TK_STRING =	107,			/**< 'STRING' token */
+
 	IC_REM_ASSIGN = 9001,		/**< '%=' instruction code */
 	IC_SHL_ASSIGN,				/**< '<<=' instruction code */
 	IC_SHR_ASSIGN,				/**< '>>=' instruction code */

@@ -45,7 +45,6 @@
 #include "error.h"
 #include "instuctions.h"
 #include "syntax.h"
-#include "tokens.h"
 
 int g, xx, iniproc, maxdisplg, wasmain;
 int reprtab[MAXREPRTAB], rp, identab[MAXIDENTAB], id, modetab[MAXMODETAB], md;
