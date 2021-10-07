@@ -1,5 +1,5 @@
 /*
- *	Copyright 2021 Andrey Terekhov, Ilya Andreev
+ *	Copyright 2021 Andrey Terekhov
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
@@ -24,12 +24,12 @@ extern "C" {
 /** Errors codes */
 typedef enum ERROR
 {
-    index_out_of_range	= 1,
+    index_out_of_range,
     wrong_kop,
     wrong_arr_init,
     wrong_number_of_elems,
-    zero_devide,
-    float_zero_devide,
+    zero_division,
+    float_zero_division,
     mem_overflow,
     sqrt_from_negat,
     log_from_negat,

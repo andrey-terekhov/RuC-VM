@@ -1,5 +1,5 @@
 /*
- *	Copyright 2021 Andrey Terekhov, Ilya Andreev
+ *	Copyright 2021 Andrey Terekhov
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ typedef enum INSTURCTION
 	IC_PRINT,					/**< 'PRINT' instruction code */
 	IC_PRINTID,					/**< 'PRINTID' instruction code */
 
-	TK_STRING =	107,			/**< 'STRING' token */
+	IC_STRING =	107,			/**< 'STRING' instruction code */
 
 	IC_REM_ASSIGN = 9001,		/**< '%=' instruction code */
 	IC_SHL_ASSIGN,				/**< '<<=' instruction code */
@@ -206,8 +206,8 @@ typedef enum INSTURCTION
 	IC_COPY1ST_ASSIGN,			/**< 'COPY1STASS' instruction code */
 	IC_COPYST,					/**< 'COPYST' instruction code */
 
-	IC_CREATE_DIR_ECT = 9528,	/**< 'CREATE_DIR' instruction code */
-	IC_EXIT_DIR_ECT,			/**< 'EXIT_DIR' instruction code */
+	IC_CREATE_DIRECT = 9528,	/**< 'CREATE_DIR' instruction code */
+	IC_EXIT_DIRECT,			/**< 'EXIT_DIR' instruction code */
 
 	IC_ABS	= 9534,				/**< 'ABS' instruction code */
 	IC_SQRT,					/**< 'SQRT' instruction code */

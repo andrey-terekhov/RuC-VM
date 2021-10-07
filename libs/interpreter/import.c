@@ -41,10 +41,30 @@
  *	Каждый кусок начинается с шапки, где хранятся l, x и pc, которые нужно установить в момент старта нити.
  */
 
-#include "defs.h"
 #include "error.h"
 #include "instuctions.h"
-#include "syntax.h"
+
+#define MAXREPRTAB	10000
+#define MAXIDENTAB	10000
+#define MAXMODETAB	1000
+#define FUNCSIZE	100
+#define MAXSTRINGL	128
+#define INIPROSIZE	100
+
+#define MAXMEMSIZE		100000
+#define NUMOFTHREADS	10
+#define MAXMEMTHREAD	MAXMEMSIZE / NUMOFTHREADS
+
+enum TYPE
+{
+	TYPE_VOID			= -6,
+	TYPE_FLOATING		= -3,
+	TYPE_CHAR,
+	TYPE_INTEGER,
+
+	TYPE_STRUCTURE		= 1002,
+	TYPE_ARRAY			= 1004,
+};
 
 int g, xx, iniproc, maxdisplg, wasmain;
 int reprtab[MAXREPRTAB], rp, identab[MAXIDENTAB], id, modetab[MAXMODETAB], md;
@@ -99,10 +119,10 @@ void runtimeerr(int e, int i, int r)
 		case wrong_number_of_elems:
 			printf(" количество элементов в массиве по каждому измерению должно быть положительным, а тут %i\n", r);
 			break;
-		case zero_devide:
+		case zero_division:
 			printf(" целое деление на 0\n");
 			break;
-		case float_zero_devide:
+		case float_zero_division:
 			printf(" вещественное деление на 0\n");
 			break;
 		case mem_overflow:
@@ -343,7 +363,7 @@ int check_zero_int(int r)
 {
 	if (r == 0)
 	{
-		runtimeerr(zero_devide, 0, 0);
+		runtimeerr(zero_division, 0, 0);
 	}
 	return r;
 }
@@ -352,7 +372,7 @@ double check_zero_float(double r)
 {
 	if (r == 0)
 	{
-		runtimeerr(float_zero_devide, 0, 0);
+		runtimeerr(float_zero_division, 0, 0);
 	}
 	return r;
 }
@@ -452,7 +472,7 @@ void *interpreter(void *pcPnt)
 			}
 			break;
 
-			case IC_CREATE_DIR_ECT:
+			case IC_CREATE_DIRECT:
 			{
 				int *arg = malloc(sizeof(*arg));
 				*arg = pc;
@@ -478,7 +498,7 @@ void *interpreter(void *pcPnt)
 				t_sleep(mem[x--]);
 				break;
 
-			case IC_EXIT_DIR_ECT:
+			case IC_EXIT_DIRECT:
 			case IC_EXIT:
 				t_exit();
 				break;
@@ -1320,7 +1340,7 @@ void *interpreter(void *pcPnt)
 			case IC_NOP:
 				break;
 			case IC_B:
-			case TK_STRING:
+			case IC_STRING:
 				pc = mem[pc];
 				break;
 			case IC_BE0:
