@@ -24,7 +24,7 @@ extern "C" {
 typedef enum INSTURCTION
 {
 	IC_GETID = -27,				/**< 'GETID' instruction code */
-	IC_PRINTF,					/**< 'PRINTF' instruction code */
+	IC_PRINTF = -25,			/**< 'PRINTF' instruction code */
 	IC_PRINT,					/**< 'PRINT' instruction code */
 	IC_PRINTID,					/**< 'PRINTID' instruction code */
 
@@ -243,7 +243,7 @@ typedef enum INSTURCTION
 	IC_GETNUM,					/**< 'GETNUM' instruction code */
 
 	IC_UPB = 9588,				/**< 'UPB' instruction code */
-	IC_ASSERT,					/**< 'ASSERT' instruction code */
+	IC_ASSERT = 9595,			/**< 'ASSERT' instruction code */
 	IC_ABSI	= 9651,				/**< 'ABSI' instruction code */
 } instruction_t;
 
