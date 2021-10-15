@@ -55,6 +55,7 @@
 #define NUMOFTHREADS	10
 #define MAXMEMTHREAD	MAXMEMSIZE / NUMOFTHREADS
 
+
 enum TYPE
 {
 	TYPE_VOID			= -6,
@@ -65,6 +66,7 @@ enum TYPE
 	TYPE_STRUCTURE		= 1002,
 	TYPE_ARRAY			= 1004,
 };
+
 
 int g, xx, iniproc, maxdisplg, wasmain;
 int reprtab[MAXREPRTAB], rp, identab[MAXIDENTAB], id, modetab[MAXMODETAB], md;
