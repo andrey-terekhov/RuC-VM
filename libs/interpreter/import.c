@@ -44,6 +44,7 @@
 #include "error.h"
 #include "instuctions.h"
 
+
 #define MAXREPRTAB	10000
 #define MAXIDENTAB	10000
 #define MAXMODETAB	1000
