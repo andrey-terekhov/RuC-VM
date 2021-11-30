@@ -1438,6 +1438,7 @@ void *interpreter(void *pcPnt)
 				{
 					mem[di + i] = mem[x + i + 1];
 				}
+				x += len;
 			}
 			break;
 			case COPY1STASS:
@@ -1450,15 +1451,16 @@ void *interpreter(void *pcPnt)
 				{
 					mem[di + i] = mem[x + i + 2];
 				}
+				x += len;
 			}
 			break;
 			case COPYST:
 			{
 				di = mem[pc++];		// смещ поля
 				len = mem[pc++];	// длина поля
-				x -= mem[pc++] + 1; // длина всей структуры
+				x -= mem[pc++];		// длина всей структуры
 
-				for (i = 0; i < len; i++)
+				for (i = 1; i <= len; i++)
 				{
 					mem[x + i] = mem[x + i + di];
 				}
