@@ -1464,7 +1464,7 @@ void *interpreter(void *pcPnt)
 				{
 					mem[x + i] = mem[x + i + di];
 				}
-				x += len - 1;
+				x += len;
 			}
 			break;
 
