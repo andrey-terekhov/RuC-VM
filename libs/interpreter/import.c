@@ -1451,7 +1451,6 @@ void *interpreter(void *pcPnt)
 				{
 					mem[di + i] = mem[x + i + 2];
 				}
-				x += len;
 			}
 			break;
 			case COPYST:
