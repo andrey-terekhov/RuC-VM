@@ -1,6 +1,6 @@
 name: GitLab Sync
 
-on: 
+on:
   - push
   - delete
 
