@@ -1,4 +1,4 @@
-name: Build
+name: Build project
 
 on:
   - push
@@ -9,27 +9,27 @@ jobs:
     name: Windows Server 2022
     runs-on: windows-2022
     steps:
-      - name: Check out repository code
+      - name: GitHub repository checkout
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Configure CMake
-        run: mkdir build && cd build && cmake ..
-      - name: Build command
-        run: cmake --build build --config Release
+      - name: Configure and Build sources
+        run: |
+          mkdir build && cd build && cmake .. && cd ..
+          cmake --build build --config Release
 
   ubuntu:
     name: Ubuntu 20.04
     runs-on: ubuntu-20.04
     steps:
-      - name: Check out repository code
+      - name: GitHub repository checkout
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Configure CMake
-        run: mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release
-      - name: Build command
-        run: cmake --build build --config Release
+      - name: Configure and Build sources
+        run: |
+          mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && cd ..
+          cmake --build build --config Release
 
   macos:
     name: macOS Big Sur 11
@@ -37,11 +37,11 @@ jobs:
     steps:
       - name: Set up environment
         run: brew install coreutils
-      - name: Check out repository code
+      - name: GitHub repository checkout
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Configure CMake
-        run: mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release
-      - name: Build command
-        run: cmake --build build --config Release
+      - name: Configure and Build sources
+        run: |
+          mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && cd ..
+          cmake --build build --config Release
