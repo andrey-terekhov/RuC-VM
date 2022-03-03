@@ -24,6 +24,12 @@ endif()
 add_compile_definitions("$<$<NOT:$<CONFIG:Debug>>:NDEBUG>")
 
 
+# Import testing exit code
+if(DEFINED TESTING_EXIT_CODE)
+	add_compile_definitions(TESTING_EXIT_CODE=${TESTING_EXIT_CODE})
+endif()
+
+
 # Add libraries
 add_subdirectory(libs)
 
@@ -48,9 +54,3 @@ get_all_targets(targets .)
 install(TARGETS ${targets}
 		RUNTIME DESTINATION ${PROJECT_NAME}
 		LIBRARY DESTINATION ${PROJECT_NAME})
-
-
-# Import testing exit code
-if(DEFINED TESTING_EXIT_CODE)
-	add_compile_definitions(TESTING_EXIT_CODE=${TESTING_EXIT_CODE})
-endif()
