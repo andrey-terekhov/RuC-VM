@@ -7,12 +7,13 @@ project(ruc-vm)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
-# Set RPATH for searching dynamic libraries in the same folder
-set(CMAKE_INSTALL_RPATH "$<NOT:$<PLATFORM_ID:Windows>>:$ORIGIN @loader_path>")
-message(${CMAKE_INSTALL_RPATH})
-set(CMAKE_SKIP_BUILD_RPATH TRUE)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+if (NOT WIN32)
+	# Set RPATH for searching dynamic libraries in the same folder
+	set(CMAKE_INSTALL_RPATH $ORIGIN @loader_path)
+	set(CMAKE_SKIP_BUILD_RPATH TRUE)
+	set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+	set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+endif()
 
 
 if(MSVC)
