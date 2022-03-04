@@ -25,6 +25,11 @@ int main(int argc, const char *argv[])
 	fflush(stderr);
     int a = 5, b = 0, c = a / b;
 	printf("%i\n", c);
+#ifdef TESTING_EXIT_CODE
+	exit(TESTING_EXIT_CODE);
+#else
+	exit(33);
+#endif
 	if (argc < 2)
 	{
 		import("export.txt");

@@ -15,11 +15,10 @@ jobs:
           fetch-depth: 0
       - name: Configure and Build sources
         run: |
-          mkdir build && cd build && cmake .. && cd ..
+          mkdir build && cd build && cmake .. -DTESTING_EXIT_CODE=0 && cd ..
           cmake --build build --config Release
       - name: Run Virtual machine
         run: .\build\Release\ruc-vm.exe
-        continue-on-error: true
 
   ubuntu:
     name: Ubuntu 20.04
@@ -31,7 +30,7 @@ jobs:
           fetch-depth: 0
       - name: Configure and Build sources
         run: |
-          mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && cd ..
+          mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release -DTESTING_EXIT_CODE=0 && cd ..
           cmake --build build --config Release
       - name: Run Virtual machine
         run: ./build/ruc-vm
@@ -46,7 +45,7 @@ jobs:
           fetch-depth: 0
       - name: Configure and Build sources
         run: |
-          mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && cd ..
+          mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release -DTESTING_EXIT_CODE=0 && cd ..
           cmake --build build --config Release
       - name: Run Virtual machine
         run: ./build/ruc-vm
