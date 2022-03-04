@@ -17,7 +17,8 @@ jobs:
         run: |
           mkdir build && cd build && cmake .. && cd ..
           cmake --build build --config Release
-          ./build/Release/ruc-vm.exe
+      - name: Run Virtual machine
+        run: ./build/Release/ruc-vm.exe
 
   ubuntu:
     name: Ubuntu 20.04
@@ -31,7 +32,8 @@ jobs:
         run: |
           mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && cd ..
           cmake --build build --config Release
-          ./build/ruc-vm
+      - name: Run Virtual machine
+        run: ./build/ruc-vm
 
   macos:
     name: macOS Big Sur 11
@@ -45,4 +47,5 @@ jobs:
         run: |
           mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && cd ..
           cmake --build build --config Release
-          ./build/ruc-vm
+      - name: Run Virtual machine
+        run: ./build/ruc-vm
