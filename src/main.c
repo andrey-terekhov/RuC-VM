@@ -19,6 +19,7 @@
 
 int main(int argc, const char *argv[])
 {
+    int a = 5 / 0;
 	if (argc < 2)
 	{
 		import("export.txt");
