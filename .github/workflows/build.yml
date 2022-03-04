@@ -18,14 +18,11 @@ jobs:
           mkdir build && cd build && cmake .. && cd ..
           cmake --build build --config Release
       - name: Run Virtual machine
-        shell: bash
+        shell: cmd
         run: |
-          echo "./build/Release/ruc-vm.exe &>log" > tmp.sh
-          echo "ret=$?" >> tmp.sh
-          echo "sed -r 's/\x1b\[[0-9;]*m//g' log > log" >> tmp.sh
-          echo "cat log" >> tmp.sh
-          echo "exit $ret" >> tmp.sh
-          ./tmp.sh
+          echo "@echo on" > tmp.bat
+          echo "./build/Release/ruc-vm.exe" >> tmp.bat
+          tmp.bat
 
   ubuntu:
     name: Ubuntu 20.04
