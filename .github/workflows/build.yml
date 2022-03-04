@@ -18,8 +18,7 @@ jobs:
           mkdir build && cd build && cmake .. && cd ..
           cmake --build build --config Release
       - name: Run Virtual machine
-        shell: bash
-        run: ./build/Release/ruc-vm.exe
+        run: echo on && build\Release\ruc-vm.exe
 
   ubuntu:
     name: Ubuntu 20.04
