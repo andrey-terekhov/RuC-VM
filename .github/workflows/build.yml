@@ -20,8 +20,9 @@ jobs:
       - name: Run Virtual machine
         shell: bash
         run: |
-          echo "./build/Release/ruc-vm.exe | tee -a log" > tmp.sh
+          echo "./build/Release/ruc-vm.exe &>log" > tmp.sh
           echo "ret=$?" >> tmp.sh
+          echo "sed -r 's/\x1b\[[0-9;]*m//g' log > log" >> tmp.sh
           echo "cat log" >> tmp.sh
           echo "exit $ret" >> tmp.sh
           ./tmp.sh
