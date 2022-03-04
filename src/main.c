@@ -15,11 +15,16 @@
  */
 
 #include "import.h"
-
+#include <stdio.h>
 
 int main(int argc, const char *argv[])
 {
-    int a = 5 / 0;
+	fprintf(stdout, "stdout\n");
+	fflush(stdout);
+	fprintf(stderr, "stderr\n");
+	fflush(stderr);
+    int a = 5, b = 0, c = a / b;
+	printf("%i\n", c);
 	if (argc < 2)
 	{
 		import("export.txt");
