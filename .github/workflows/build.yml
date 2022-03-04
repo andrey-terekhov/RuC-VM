@@ -18,9 +18,8 @@ jobs:
           mkdir build && cd build && cmake .. && cd ..
           cmake --build build --config Release
       - name: Run Virtual machine
-        shell: cmd
         run: |
-          echo on
+          $ErrorView = 'NormalView'
           build\Release\ruc-vm.exe
 
   ubuntu:
