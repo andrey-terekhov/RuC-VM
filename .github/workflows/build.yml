@@ -22,10 +22,8 @@ jobs:
         shell: bash
         run: |
           echo "./build/Release/ruc-vm.exe &>log" > tmp.sh
-          echo "ret=$?" >> tmp.sh
+          echo "echo $?" >> tmp.sh
           echo "cat log" >> tmp.sh
-          echo "echo $ret" >> tmp.sh
-          echo "exit $ret" >> tmp.sh
           ./tmp.sh
 
   ubuntu:
