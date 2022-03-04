@@ -18,7 +18,8 @@ jobs:
           mkdir build && cd build && cmake .. && cd ..
           cmake --build build --config Release
       - name: Run Virtual machine
-        run: .\build\Release\ruc-vm.exe | Write-Host
+        shell: bash
+        run: ./build/Release/ruc-vm.exe &>log | cat log
 
   ubuntu:
     name: Ubuntu 20.04
