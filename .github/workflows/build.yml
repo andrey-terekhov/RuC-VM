@@ -25,6 +25,7 @@ jobs:
           echo "echo $?" >> tmp.sh
           echo "cat log" >> tmp.sh
           ./tmp.sh
+          ./build/Release/ruc-vm.exe
 
   ubuntu:
     name: Ubuntu 20.04
