@@ -15,7 +15,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 
 if(MSVC)
-	add_compile_options(/MD)
+	add_compile_options(/MT)
 	add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 else()
 	add_compile_options(-Wno-unused-result)
