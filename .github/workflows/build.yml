@@ -18,9 +18,7 @@ jobs:
           mkdir build && cd build && cmake .. && cd ..
           cmake --build build --config Release
       - name: Run Virtual machine
-        run: |
-          $ErrorView = 'NormalView'
-          build\Release\ruc-vm.exe
+        run: stdbuf -o0 .\build\Release\ruc-vm.exe
 
   ubuntu:
     name: Ubuntu 20.04
