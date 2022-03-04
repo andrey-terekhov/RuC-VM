@@ -19,14 +19,7 @@ jobs:
           cmake .. -DTESTING_EXIT_CODE=0
           cmake --build . --config Release
       - name: Run Virtual machine
-        shell: bash
-        run: |
-          echo "./build/Release/ruc-vm.exe &>log" > tmp.sh
-          echo "wait $!" >> tmp.sh
-          echo "ret=$?" >> tmp.sh
-          echo "cat log" >> tmp.sh
-          echo "exit $ret" >> tmp.sh
-          ./tmp.sh
+        run: .\build\Release\ruc-vm.exe
 
   ubuntu:
     name: Ubuntu 20.04
