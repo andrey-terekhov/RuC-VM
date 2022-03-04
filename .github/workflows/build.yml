@@ -18,11 +18,8 @@ jobs:
           mkdir build && cd build && cmake .. && cd ..
           cmake --build build --config Release
       - name: Run Virtual machine
-        shell: cmd
-        run: |
-          echo "@echo on" > tmp.bat
-          echo "./build/Release/ruc-vm.exe" >> tmp.bat
-          tmp.bat
+        run: .\build\Release\ruc-vm.exe
+        continue-on-error: true
 
   ubuntu:
     name: Ubuntu 20.04
