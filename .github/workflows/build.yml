@@ -15,10 +15,16 @@ jobs:
           fetch-depth: 0
       - name: Configure and Build sources
         run: |
-          mkdir build && cd build && cmake .. -DTESTING_EXIT_CODE=0 && cd ..
-          cmake --build build --config Release
+          mkdir build && cd build
+          cmake .. -DTESTING_EXIT_CODE=0
+          cmake --build . --config Release
       - name: Run Virtual machine
-        run: .\build\Release\ruc-vm.exe
+        run: |
+          echo "./Release/ruc-vm.exe &>log" > tmp.sh
+          echo "ret=$?" >> tmp.sh
+          echo "cat log" >> tmp.sh
+          echo "exit $?" >> tmp.sh
+          ./tmp.sh
 
   ubuntu:
     name: Ubuntu 20.04
@@ -30,10 +36,11 @@ jobs:
           fetch-depth: 0
       - name: Configure and Build sources
         run: |
-          mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release -DTESTING_EXIT_CODE=0 && cd ..
-          cmake --build build --config Release
+          mkdir -p build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DTESTING_EXIT_CODE=0
+          cmake --build . --config Release
       - name: Run Virtual machine
-        run: ./build/ruc-vm
+        run: ./ruc-vm
 
   macos:
     name: macOS Big Sur 11
@@ -45,7 +52,8 @@ jobs:
           fetch-depth: 0
       - name: Configure and Build sources
         run: |
-          mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release -DTESTING_EXIT_CODE=0 && cd ..
-          cmake --build build --config Release
+          mkdir -p build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DTESTING_EXIT_CODE=0
+          cmake --build . --config Release
       - name: Run Virtual machine
-        run: ./build/ruc-vm
+        run: ./ruc-vm

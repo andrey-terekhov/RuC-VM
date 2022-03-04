@@ -16,6 +16,7 @@
 
 #include "import.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 int main(int argc, const char *argv[])
 {
@@ -23,8 +24,6 @@ int main(int argc, const char *argv[])
 	fflush(stdout);
 	fprintf(stderr, "stderr\n");
 	fflush(stderr);
-    int a = 5, b = 0, c = a / b;
-	printf("%i\n", c);
 #ifdef TESTING_EXIT_CODE
 	exit(TESTING_EXIT_CODE);
 #else
