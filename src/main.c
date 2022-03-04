@@ -15,20 +15,10 @@
  */
 
 #include "import.h"
-#include <stdio.h>
-#include <stdlib.h>
+
 
 int main(int argc, const char *argv[])
 {
-	fprintf(stdout, "stdout\n");
-	fflush(stdout);
-	fprintf(stderr, "stderr\n");
-	fflush(stderr);
-#ifdef TESTING_EXIT_CODE
-	exit(TESTING_EXIT_CODE);
-#else
-	exit(33);
-#endif
 	if (argc < 2)
 	{
 		import("export.txt");
