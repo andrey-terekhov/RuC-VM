@@ -19,7 +19,12 @@ jobs:
           cmake --build build --config Release
       - name: Run Virtual machine
         shell: bash
-        run: echo -e "./build/Release/ruc-vm.exe &>log\ncat log" > tmp.sh & ./tmp.sh
+        run: |
+          echo "./build/Release/ruc-vm.exe | tee -a log" > tmp.sh
+          echo "ret=$?" >> tmp.sh
+          echo "cat log" >> tmp.sh
+          echo "exit $ret" >> tmp.sh
+          ./tmp.sh
 
   ubuntu:
     name: Ubuntu 20.04
