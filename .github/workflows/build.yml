@@ -19,11 +19,12 @@ jobs:
           cmake .. -DTESTING_EXIT_CODE=0
           cmake --build . --config Release
       - name: Run Virtual machine
+        shell: bash
         run: |
-          echo "./Release/ruc-vm.exe &>log" > tmp.sh
+          echo "./build/Release/ruc-vm.exe &>log" > tmp.sh
           echo "ret=$?" >> tmp.sh
           echo "cat log" >> tmp.sh
-          echo "exit $?" >> tmp.sh
+          echo "exit $ret" >> tmp.sh
           ./tmp.sh
 
   ubuntu:
@@ -40,7 +41,7 @@ jobs:
           cmake .. -DCMAKE_BUILD_TYPE=Release -DTESTING_EXIT_CODE=0
           cmake --build . --config Release
       - name: Run Virtual machine
-        run: ./ruc-vm
+        run: ./build/ruc-vm
 
   macos:
     name: macOS Big Sur 11
@@ -56,4 +57,4 @@ jobs:
           cmake .. -DCMAKE_BUILD_TYPE=Release -DTESTING_EXIT_CODE=0
           cmake --build . --config Release
       - name: Run Virtual machine
-        run: ./ruc-vm
+        run: ./build/ruc-vm
