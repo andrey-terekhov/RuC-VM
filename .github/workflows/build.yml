@@ -6,8 +6,8 @@ on:
 
 jobs:
   windows:
-    name: Windows Server 2022
-    runs-on: windows-2022
+    name: Windows Server 2019
+    runs-on: windows-2019
     steps:
       - name: GitHub repository checkout
         uses: actions/checkout@v2
@@ -18,8 +18,7 @@ jobs:
           mkdir build && cd build && cmake .. && cd ..
           cmake --build build --config Release
       - name: Run Virtual machine
-        shell: bash
-        run: ./build/Release/ruc-vm.exe
+        run: build\Release\ruc-vm.exe
 
   ubuntu:
     name: Ubuntu 20.04
