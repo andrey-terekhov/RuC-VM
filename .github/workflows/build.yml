@@ -21,7 +21,11 @@ jobs:
       - name: Run Virtual machine
         shell: bash
         run: |
-          echo -e "./build/Release/ruc-vm.exe &>log\nret=$?\ncat log\nexit $ret" > tmp.sh
+          echo "./build/Release/ruc-vm.exe &>log" > tmp.sh
+          echo "wait $!" >> tmp.sh
+          echo "ret=$?" >> tmp.sh
+          echo "cat log" >> tmp.sh
+          echo "exit $ret" >> tmp.sh
           ./tmp.sh
 
   ubuntu:
