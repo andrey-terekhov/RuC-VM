@@ -204,6 +204,14 @@ void auxprintf(int strbeg, int databeg)
 				}
 				break;
 
+				case 'p': 
+				//case 1091: // у
+				{
+					(!mem[curdata]) ? printf("NULL") : printf("%p", mem[curdata]);
+					curdata++;
+					break;
+				}
+
 				case '%':
 					printf("%%");
 					break;
