@@ -1197,6 +1197,10 @@ void *interpreter(void *pcPnt)
 						runtimeerr(init_err, mem[adinit], stN[1]);
 					}
 
+					int num_of_lowest_dimensions = 0;
+					int supposed_number_of_lowest_dimensions[10000];
+					supposed_number_of_lowest_dimensions[N] = 1;
+
 					adinit++;
 					do
 					{
@@ -1210,6 +1214,11 @@ void *interpreter(void *pcPnt)
 								runtimeerr(init_err, mem[adinit], stN[stpnt]);
 							}
 							adinit++;
+						}
+
+						for (int dimension_index = N - 1; dimension_index >= 0; dimension_index--)
+						{
+							supposed_number_of_lowest_dimensions[dimension_index] = stN[dimension_index] * supposed_number_of_lowest_dimensions[dimension_index + 1];
 						}
 
 						do
@@ -1231,12 +1240,20 @@ void *interpreter(void *pcPnt)
 								mem[stA[stpnt] + sti[stpnt]] = adinit + 1;
 								adinit += mem[adinit] * d + 1;
 							}
+							++num_of_lowest_dimensions;
 						} while (++sti[stpnt] < stN[stpnt]);
+
+						int dimension_index = 1;
+						while (num_of_lowest_dimensions % supposed_number_of_lowest_dimensions[dimension_index] != 0)
+						{
+							++dimension_index;
+						}
+						int next_dimension = dimension_index - 1;
 
 						if (stpnt > 1)
 						{
 							sti[stpnt] = 0;
-							stpnt--;
+							stpnt = (next_dimension == 0) ? 1 : next_dimension;
 							stA[stpnt] += ++sti[stpnt];
 						}
 					} while (stpnt != 1 || sti[1] != stN[1]);
