@@ -1486,6 +1486,13 @@ void *interpreter(void *pcPnt)
 				x += len;
 			}
 			break;
+			case IC_COPY_FROM_END:
+			{
+				int displacement_from_end = mem[pc++];
+				mem[x + 1] = mem[x - displacement_from_end];
+				++x;
+			}
+			break;
 
 			case IC_SLICE:
 			{
