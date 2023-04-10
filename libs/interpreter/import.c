@@ -1437,6 +1437,17 @@ void *interpreter(void *pcPnt)
 				}
 			}
 			break;
+			case IC_COPY2ST:
+			{
+				len = mem[x--];
+				di = mem[x--];
+
+				for (i = 0; i < len; i++)
+				{
+					mem[++x] = mem[di + i];
+				}
+			}
+			break;
 			case IC_COPY0ST_ASSIGN:
 			{
 				di = dsp(mem[pc++], l);
