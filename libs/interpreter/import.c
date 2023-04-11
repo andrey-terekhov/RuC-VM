@@ -245,6 +245,13 @@ void auxprint(int beg, int t, char before, char after)
 		printf("%c", before);
 	}
 
+	if (modetab[t] == MREFERENCE)
+	{
+		beg += szof(t);
+		t = modetab[t + 1];
+		beg -= szof(t);
+	}
+
 	if (t == LINT)
 	{
 		printf("%i", r);

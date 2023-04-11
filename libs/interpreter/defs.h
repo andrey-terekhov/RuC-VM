@@ -39,6 +39,7 @@
 #define MSTRUCT	  1002
 #define MARRAY	  1003
 #define MPOINT	  1004
+#define MREFERENCE 1007
 
 
 // Лексемы операций языка С
