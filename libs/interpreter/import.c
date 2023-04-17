@@ -1254,7 +1254,8 @@ void *interpreter(void *pcPnt)
 						{
 							sti[stpnt] = 0;
 							stpnt = (next_dimension == 0) ? 1 : next_dimension;
-							stA[stpnt] += ++sti[stpnt];
+							stA[stpnt] += 1;
+							++sti[stpnt];
 						}
 					} while (stpnt != 1 || sti[1] != stN[1]);
 				}
