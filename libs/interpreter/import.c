@@ -1437,6 +1437,17 @@ void *interpreter(void *pcPnt)
 				}
 			}
 			break;
+			case IC_COPY2ST:
+			{
+				len = mem[x--];
+				di = mem[x--];
+
+				for (i = 0; i < len; i++)
+				{
+					mem[++x] = mem[di + i];
+				}
+			}
+			break;
 			case IC_COPY0ST_ASSIGN:
 			{
 				di = dsp(mem[pc++], l);
@@ -1473,6 +1484,13 @@ void *interpreter(void *pcPnt)
 					mem[x + i] = mem[x + i + di];
 				}
 				x += len;
+			}
+			break;
+			case IC_COPY_FROM_END:
+			{
+				int displacement_from_end = mem[pc++];
+				mem[x + 1] = mem[x - displacement_from_end];
+				++x;
 			}
 			break;
 
