@@ -202,10 +202,10 @@ typedef enum INSTURCTION
 	IC_COPY11,					/**< 'COPY11' instruction code */
 	IC_COPY0ST,					/**< 'COPY0ST' instruction code */
 	IC_COPY1ST,					/**< 'COPY1ST' instruction code */
-	IC_COPY2ST,                 /**< 'COPY2ST' instruction code */
 	IC_COPY0ST_ASSIGN,			/**< 'COPY0STASS' instruction code */
 	IC_COPY1ST_ASSIGN,			/**< 'COPY1STASS' instruction code */
 	IC_COPYST,					/**< 'COPYST' instruction code */
+	IC_COPY2ST,                 /**< 'COPY2ST' instruction code */
 	IC_COPY_FROM_END,			/**< 'COPYLAST' instruction code */
 
 	IC_CREATE_DIRECT = 9528,	/**< 'CREATE_DIR' instruction code */
