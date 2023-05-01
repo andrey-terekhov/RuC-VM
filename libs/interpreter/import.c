@@ -1244,6 +1244,114 @@ void *interpreter(void *pcPnt)
 				x = adinit - 1;
 			}
 			break;
+			case IC_ARR_INIT_STACK_ADDR:
+			{
+				N = mem[pc++]; // N - размерность
+				d = mem[pc++]; // d - шаг
+
+				int addr = mem[x--];
+				int usual = mem[pc++];
+				int onlystrings = usual >= 2 ? usual -= 2, 1 : 0;
+				int stA[10], stN[10], sti[10], stpnt = 1, oldx = adinit;
+
+				if (N == 1)
+				{
+					if (onlystrings)
+					{
+						mem[addr] = mem[x--];
+					}
+					else
+					{
+						mem[addr] = adinit + 1;
+
+						if (usual && mem[adinit] != NN) // здесь usual == 1,
+						{								// если usual == 0, проверка не нужна
+							runtimeerr(init_err, mem[adinit], NN);
+						}
+						adinit += mem[adinit] * d + 1;
+					}
+				}
+				else
+				{
+					stA[1] = mem[addr]; // массив самого верхнего уровня
+					stN[1] = mem[stA[1] - 1];
+					sti[1] = 0;
+
+					if (mem[adinit] != stN[1])
+					{
+						runtimeerr(init_err, mem[adinit], stN[1]);
+					}
+
+					int num_of_lowest_dimensions = 0;
+					int supposed_number_of_lowest_dimensions[10000];
+					supposed_number_of_lowest_dimensions[N] = 1;
+
+					adinit++;
+					do
+					{
+						while (stpnt < N - 1)
+						{
+							stA[stpnt + 1] = mem[stA[stpnt]];
+							sti[++stpnt] = 0;
+							stN[stpnt] = mem[stA[stpnt] - 1];
+							if (mem[adinit] != stN[stpnt])
+							{
+								runtimeerr(init_err, mem[adinit], stN[stpnt]);
+							}
+							adinit++;
+						}
+
+						for (int dimension_index = N - 1; dimension_index >= 0; dimension_index--)
+						{
+							supposed_number_of_lowest_dimensions[dimension_index] = stN[dimension_index] * supposed_number_of_lowest_dimensions[dimension_index + 1];
+						}
+
+						do
+						{
+							if (onlystrings)
+							{
+								mem[stA[stpnt] + sti[stpnt]] = mem[++oldx];
+								if (usual && mem[mem[oldx - 1] - 1] != NN)
+								{
+									runtimeerr(init_err, mem[adinit], NN);
+								}
+							}
+							else
+							{
+								if (usual && mem[adinit] != NN)
+								{
+									runtimeerr(init_err, mem[adinit], NN);
+								}
+								mem[stA[stpnt] + sti[stpnt]] = adinit + 1;
+								adinit += mem[adinit] * d + 1;
+							}
+							++num_of_lowest_dimensions;
+						} while (++sti[stpnt] < stN[stpnt]);
+
+						int dimension_index = 1;
+						while (num_of_lowest_dimensions % supposed_number_of_lowest_dimensions[dimension_index] != 0)
+						{
+							++dimension_index;
+						}
+						int next_dimension = dimension_index - 1;
+
+						if (stpnt > 1)
+						{
+							sti[stpnt] = 0;
+							stpnt = (next_dimension == 0) ? 1 : next_dimension;
+							stA[stpnt] += 1;
+							++sti[stpnt];
+						}
+					} while (stpnt != 1 || sti[1] != stN[1]);
+				}
+				x = adinit - 1;
+			}
+			break;
+			case IC_SET_ARR_INIT_START:
+			{
+				adinit = x + 1;
+			}
+			break;
 
 			case IC_LI:
 				mem[++x] = mem[pc++];
