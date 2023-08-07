@@ -800,56 +800,34 @@ void *interpreter(void *pcPnt)
 
 			case STRCPYC:
 			{
-				str2 = mem[x--];
-				a_str1 = mem[x--];
-				mem[a_str1] = str2;
+                printf("STRCPY VM code is deprecated\n");
+                exit(2);
 			}
 			break;
 			case STRNCPYC:
 			{
 				num = mem[x--];
-				str2 = mem[x--];
-				a_str1 = mem[x--];
+				str2 = mem[x];
 
-				if (num > mem[str2 - 1])
-				{
-#ifdef TESTING_EXIT_CODE
-					exit(TESTING_EXIT_CODE);
-#else
-					exit(2); // error
-#endif
-				}
-
-				if (num <= mem[mem[a_str1] - 1])
-				{
-					a_str1 = mem[a_str1];
-					mem[a_str1 - 1] = num;
-					num += a_str1;
-					while (a_str1 < num)
-					{
-						mem[a_str1++] = mem[str2++];
-					}
-				}
 				mem[x++] = num;
-				mem[a_str1] = x;
+				str1 = x;
 
 				num += x;
 				while (x < num)
 				{
 					mem[x++] = mem[str2++];
 				}
-				x--;
+                mem[x] = str1;
 			}
 			break;
 			case STRCATC:
 			{
 				str2 = mem[x--];
-				a_str1 = mem[x--];
-				str1 = mem[a_str1];
+				str1 = mem[x];
 
-				mem[x++] = mem[str2 - 1] + mem[mem[a_str1] - 1];
-				mem[a_str1] = x;
-				a_str1 = mem[a_str1];
+				mem[x++] = mem[str2 - 1] + mem[str1 - 1];
+
+				a_str1 = x;
 
 				num = x + mem[str1 - 1];
 				while (x < num)
@@ -862,116 +840,81 @@ void *interpreter(void *pcPnt)
 				{
 					mem[x++] = mem[str2++];
 				}
-				x--;
+				mem[x] = a_str1;
 			}
 			break;
 			case STRNCATC:
 			{
-				num = mem[x--];
-				str2 = mem[x--];
-				a_str1 = mem[x--];
-				str1 = mem[a_str1];
-
-				mem[x++] = num + mem[mem[a_str1] - 1];
-				mem[a_str1] = x;
-				a_str1 = mem[a_str1];
-
-				i = x + mem[str1 - 1];
-				while (x < i)
-				{
-					mem[x++] = mem[str1++];
-				}
-
-				num += x;
-				while (x < num)
-				{
-					mem[x++] = mem[str2++];
-				}
-				x--;
+                printf("STRNCAT VM code is deprecated\n");
+                exit(2);
 			}
 			break;
 			case STRCMPC:
 			{
 				str2 = mem[x--];
-				a_str1 = mem[x];
+				str1 = mem[x];
+                mem[x] = 0;
 
-				if (mem[a_str1 - 1] < mem[str2 - 1])
-				{
-					mem[x] = 1;
-					break;
-				}
-				else if (mem[a_str1 - 1] > mem[str2 - 1])
-				{
-					mem[x] = -1;
-					break;
-				}
-				else
-				{
-					for (i = 0; i < mem[str2 - 1]; i++)
-					{
-						if (mem[a_str1 + i] < mem[str2 + i])
-						{
-							mem[x] = 1;
-							break;
-						}
-						else if (mem[a_str1 + i] > mem[str2 + i])
-						{
-							mem[x] = -1;
-							break;
-						}
-					}
+                for (i = 0; i < mem[str2 - 1] && i < mem[str1 - 1]; i++)
+                {
+                    if (mem[str1 + i] - mem[str2 + i])
+                    {
+                        mem[x] = mem[str1 + i] - mem[str2 + i];
+                        break;
+                    }
+                }
+                if (mem[x]) {
+                    break;
+                }
 
-					if (i == mem[str2 - 1])
-					{
-						mem[x] = 0;
-					}
-				}
+                if (i < mem[str2 - 1])
+                {
+                    mem[x] = 1;
+                } else if (i < mem[str1 - 1])
+                {
+                    mem[x] = -1;
+                } else
+                {
+                    mem[x] = 0;
+                }
 			}
 			break;
 			case STRNCMPC:
 			{
 				num = mem[x--];
 				str2 = mem[x--];
-				a_str1 = mem[x];
+				str1 = mem[x];
+                mem[x] = 0;
 
-				if (mem[a_str1 - 1] < mem[str2 - 1] && mem[a_str1 - 1] < num)
-				{
-					mem[x] = 1;
-					break;
-				}
-				else if (mem[a_str1 - 1] > mem[str2 - 1] && mem[str2 - 1] < num)
-				{
-					mem[x] = -1;
-					break;
-				}
-				else
-				{
-					for (i = 0; i < num; i++)
-					{
-						if (i == mem[a_str1 - 1] && i == mem[str2 - 1])
-						{
-							mem[x] = 0;
-							break;
-						}
+                for (i = 0; i < num && i < mem[str1 - 1] && i < mem[str2 - 1]; i++)
+                {
+                    if (i == mem[str1 - 1] && i == mem[str2 - 1])
+                    {
+                        mem[x] = 0;
+                        break;
+                    }
 
-						if (mem[a_str1 + i] < mem[str2 + i])
-						{
-							mem[x] = 1;
-							break;
-						}
+                    if (mem[str1 + i] - mem[str2 + i])
+                    {
+                        mem[x] = mem[str1 + i] - mem[str2 + i];
+                        break;
+                    }
+                }
 
-						if (mem[a_str1 + i] > mem[str2 + i])
-						{
-							mem[x] = -1;
-							break;
-						}
-					}
+                if (mem[x] || i == num) {
+                    break;
+                }
 
-					if (i == num)
-					{
-						mem[x] = 0;
-					}
-				}
+                if (i < mem[str2 - 1])
+                {
+                    mem[x] = 1;
+                } else if (i < mem[str1 - 1])
+                {
+                    mem[x] = -1;
+                } else
+                {
+                    mem[x] = 0;
+                }
 			}
 			break;
 			case STRSTRC:
@@ -1011,8 +954,8 @@ void *interpreter(void *pcPnt)
 			break;
 			case STRLENC:
 			{
-				a_str1 = mem[x];
-				mem[x] = mem[a_str1 - 1];
+                printf("STRLEN VM code is deprecated\n");
+                exit(2);
 			}
 			break;
 			case STRUCTWITHARR:
