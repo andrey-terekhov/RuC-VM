@@ -59,6 +59,7 @@
 #define printf_runtime_crash  13
 #define init_err			  14
 
+#define FILESIZE (sizeof(FILE *) / sizeof(int))
 
 int g, xx, iniproc, maxdisplg, wasmain;
 int reprtab[MAXREPRTAB], rp, identab[MAXIDENTAB], id, modetab[MAXMODETAB], md;
@@ -89,9 +90,10 @@ void *interpreter(void *);
 
 int szof(int type)
 {
-	return modetab[type] == MARRAY
-			   ? 1
-			   : type == LFLOAT ? 2 : (type > 0 && modetab[type] == MSTRUCT) ? modetab[type + 1] : 1;
+	return modetab[type] == MARRAY					? 1
+		   : type == LFLOAT							? 2
+		   : (type > 0 && modetab[type] == MSTRUCT) ? modetab[type + 1]
+													: 1;
 }
 
 void runtimeerr(int e, int i, int r)
@@ -163,6 +165,48 @@ void prmem()
 }
 */
 
+char *rucchar_to_cstr(int ch)
+{
+	if (ch < 128)
+	{
+		char *str = calloc(sizeof(char), 2);
+		str[0] = ch;
+		return str;
+	}
+	else
+	{
+		char *str = calloc(sizeof(char), 3);
+		unsigned char first = (ch >> 6) | 0b11000000;
+		unsigned char second = (ch & 0b00111111) | 0b10000000;
+		str[0] = first;
+		str[1] = second;
+		return str;
+	}
+}
+
+char *rucstr_to_cstr(int strbeg)
+{
+	int len = mem[strbeg - 1];
+	char *str = calloc(sizeof(char), (len * 2 + 1));
+	for (int i = 0, j = 0; i < len; i++)
+	{
+		int ch = mem[strbeg + i];
+
+		if (ch < 128)
+		{
+			str[j++] = ch;
+		}
+		else
+		{
+			unsigned char first = (ch >> 6) | 0b11000000;
+			unsigned char second = (ch & 0b00111111) | 0b10000000;
+			str[j++] = first;
+			str[j++] = second;
+		}
+	}
+	return str;
+}
+
 void auxprintf(int strbeg, int databeg)
 {
 	int i, n = mem[strbeg - 1];
@@ -204,14 +248,14 @@ void auxprintf(int strbeg, int databeg)
 				}
 				break;
 
-				case 'p': 
+				case 'p':
 				case 1091: // у
 				{
 					if (mem[curdata] == 0)
 					{
 						printf("NULL");
 					}
-					else 
+					else
 					{
 						printf("0x%0X", mem[curdata]);
 					}
@@ -800,8 +844,8 @@ void *interpreter(void *pcPnt)
 
 			case STRCPYC:
 			{
-                printf("STRCPY VM code is deprecated\n");
-                exit(2);
+				printf("STRCPY VM code is deprecated\n");
+				exit(2);
 			}
 			break;
 			case STRNCPYC:
@@ -817,7 +861,7 @@ void *interpreter(void *pcPnt)
 				{
 					mem[x++] = mem[str2++];
 				}
-                mem[x] = str1;
+				mem[x] = str1;
 			}
 			break;
 			case STRCATC:
@@ -845,38 +889,41 @@ void *interpreter(void *pcPnt)
 			break;
 			case STRNCATC:
 			{
-                printf("STRNCAT VM code is deprecated\n");
-                exit(2);
+				printf("STRNCAT VM code is deprecated\n");
+				exit(2);
 			}
 			break;
 			case STRCMPC:
 			{
 				str2 = mem[x--];
 				str1 = mem[x];
-                mem[x] = 0;
+				mem[x] = 0;
 
-                for (i = 0; i < mem[str2 - 1] && i < mem[str1 - 1]; i++)
-                {
-                    if (mem[str1 + i] - mem[str2 + i])
-                    {
-                        mem[x] = mem[str1 + i] - mem[str2 + i];
-                        break;
-                    }
-                }
-                if (mem[x]) {
-                    break;
-                }
+				for (i = 0; i < mem[str2 - 1] && i < mem[str1 - 1]; i++)
+				{
+					if (mem[str1 + i] - mem[str2 + i])
+					{
+						mem[x] = mem[str1 + i] - mem[str2 + i];
+						break;
+					}
+				}
+				if (mem[x])
+				{
+					break;
+				}
 
-                if (i < mem[str2 - 1])
-                {
-                    mem[x] = 1;
-                } else if (i < mem[str1 - 1])
-                {
-                    mem[x] = -1;
-                } else
-                {
-                    mem[x] = 0;
-                }
+				if (i < mem[str2 - 1])
+				{
+					mem[x] = 1;
+				}
+				else if (i < mem[str1 - 1])
+				{
+					mem[x] = -1;
+				}
+				else
+				{
+					mem[x] = 0;
+				}
 			}
 			break;
 			case STRNCMPC:
@@ -884,37 +931,40 @@ void *interpreter(void *pcPnt)
 				num = mem[x--];
 				str2 = mem[x--];
 				str1 = mem[x];
-                mem[x] = 0;
+				mem[x] = 0;
 
-                for (i = 0; i < num && i < mem[str1 - 1] && i < mem[str2 - 1]; i++)
-                {
-                    if (i == mem[str1 - 1] && i == mem[str2 - 1])
-                    {
-                        mem[x] = 0;
-                        break;
-                    }
+				for (i = 0; i < num && i < mem[str1 - 1] && i < mem[str2 - 1]; i++)
+				{
+					if (i == mem[str1 - 1] && i == mem[str2 - 1])
+					{
+						mem[x] = 0;
+						break;
+					}
 
-                    if (mem[str1 + i] - mem[str2 + i])
-                    {
-                        mem[x] = mem[str1 + i] - mem[str2 + i];
-                        break;
-                    }
-                }
+					if (mem[str1 + i] - mem[str2 + i])
+					{
+						mem[x] = mem[str1 + i] - mem[str2 + i];
+						break;
+					}
+				}
 
-                if (mem[x] || i == num) {
-                    break;
-                }
+				if (mem[x] || i == num)
+				{
+					break;
+				}
 
-                if (i < mem[str2 - 1])
-                {
-                    mem[x] = 1;
-                } else if (i < mem[str1 - 1])
-                {
-                    mem[x] = -1;
-                } else
-                {
-                    mem[x] = 0;
-                }
+				if (i < mem[str2 - 1])
+				{
+					mem[x] = 1;
+				}
+				else if (i < mem[str1 - 1])
+				{
+					mem[x] = -1;
+				}
+				else
+				{
+					mem[x] = 0;
+				}
 			}
 			break;
 			case STRSTRC:
@@ -954,8 +1004,8 @@ void *interpreter(void *pcPnt)
 			break;
 			case STRLENC:
 			{
-                printf("STRLEN VM code is deprecated\n");
-                exit(2);
+				printf("STRLEN VM code is deprecated\n");
+				exit(2);
 			}
 			break;
 			case STRUCTWITHARR:
@@ -1413,9 +1463,9 @@ void *interpreter(void *pcPnt)
 			break;
 			case COPYST:
 			{
-				di = mem[pc++];		// смещ поля
-				len = mem[pc++];	// длина поля
-				x -= mem[pc++];		// длина всей структуры
+				di = mem[pc++];	 // смещ поля
+				len = mem[pc++]; // длина поля
+				x -= mem[pc++];	 // длина всей структуры
 
 				for (i = 1; i <= len; i++)
 				{
@@ -2210,7 +2260,57 @@ void *interpreter(void *pcPnt)
 			case LOGNOT:
 				mem[x] = !mem[x];
 				break;
+			case FOPEN:
+            {
+                int modebeg = mem[x--];
+                int filenamebeg = mem[x--];
+                char *filename = rucstr_to_cstr(filenamebeg);
+                char *mode = rucstr_to_cstr(modebeg);
 
+                FILE *file = fopen(filename, mode);
+                free(filename);
+                free(mode);
+                memcpy(mem + x + 1, &file, sizeof(FILE *));
+                x += FILESIZE;
+            }
+            break;
+            case FCLOSE:
+            {
+                x -= FILESIZE;
+                FILE *file;
+                memcpy(&file, mem + x + 1, sizeof(FILE *));
+                fclose(file);
+            }
+            break;
+            case FGETC:
+            {
+                x -= FILESIZE;
+                FILE *file;
+                memcpy(&file, mem + x + 1, sizeof(FILE *));
+
+                int firstchar = fgetc(file);
+                if ((firstchar & /*0b11100000*/ 0xE0) == /*0b11000000*/ 0xC0)
+                {
+                    int secondchar = fgetc(file);
+                    mem[++x] = ((int)(firstchar & /*0b11111*/ 0x1F)) << 6 | (secondchar & /*0b111111*/ 0x3F);
+                }
+                else
+                {
+                    mem[++x] = firstchar;
+                }
+            }
+            break;
+            case FPUTC:
+            {
+                x -= FILESIZE;
+                FILE *file;
+                memcpy(&file, mem + x + 1, sizeof(FILE *));
+                char *str = rucchar_to_cstr(mem[x--]);
+
+                fputs(str, file);
+                free(str);
+            }
+            break;
 			default:
 				runtimeerr(wrong_kop, mem[pc - 1], numTh);
 		}

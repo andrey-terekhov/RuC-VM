@@ -312,6 +312,10 @@
 
 #define ASSERTC 9595
 
+#define FOPEN 9652
+#define FCLOSE 9653
+#define FGETC 9654
+#define FPUTC 9655
 
 // Лексемы
 
